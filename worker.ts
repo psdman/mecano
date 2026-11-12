@@ -7,6 +7,7 @@
 interface Env {
   ASSETS: { fetch: (request: Request) => Promise<Response> };
   GEMINI_API_KEY?: string;
+  DB?: any; // D1Database
 }
 
 const SCAN_PROMPT = `Tu es un assistant expert pour mécaniciens et garagistes automobiles spécialisé dans la lecture optique et l'analyse de documents automobiles français et internationaux (Certificat d'immatriculation / Carte Grise) ainsi que des plaques d'immatriculation sur véhicules.
@@ -182,6 +183,223 @@ async function handleScan(request: Request, env: Env): Promise<Response> {
   );
 }
 
+// ================= AUTH & D1 DATABASE =================
+
+const SESSION_COOKIE = 'mecano_session';
+const SESSION_TTL_MS = 7 * 24 * 3600 * 1000;
+
+function uuid(): string {
+  return crypto.randomUUID();
+}
+
+async function hashPassword(password: string, salt: string): Promise<string> {
+  const enc = new TextEncoder();
+  const key = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveBits']);
+  const bits = await crypto.subtle.deriveBits(
+    { name: 'PBKDF2', hash: 'SHA-256', salt: enc.encode(salt), iterations: 100000 },
+    key,
+    256
+  );
+  return Array.from(new Uint8Array(bits)).map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+function getCookie(request: Request, name: string): string | null {
+  const cookie = request.headers.get('Cookie') || '';
+  for (const part of cookie.split(';')) {
+    const [k, v] = part.trim().split('=');
+    if (k === name) return decodeURIComponent(v);
+  }
+  return null;
+}
+
+async function getSessionUser(request: Request, env: Env): Promise<any | null> {
+  if (!env.DB) return null;
+  const token = getCookie(request, SESSION_COOKIE);
+  if (!token) return null;
+  const row = await env.DB.prepare(
+    `SELECT u.id, u.username, u.role, u.nom FROM sessions s JOIN users u ON u.id = s.user_id
+     WHERE s.token = ? AND s.expires_at > ?`
+  ).bind(token, Date.now()).first();
+  return row || null;
+}
+
+function requireDb(env: Env): Response | null {
+  if (!env.DB) return jsonResponse({ success: false, error: 'Base de données non configurée (D1).' }, 503);
+  return null;
+}
+
+const COLLECTIONS: Record<string, { table: string; idCol?: string }> = {
+  clients: { table: 'clients' },
+  vehicles: { table: 'vehicles' },
+  interventions: { table: 'interventions' },
+  payments: { table: 'payments' },
+};
+
+async function handleAuth(request: Request, env: Env, url: URL): Promise<Response | null> {
+  const path = url.pathname;
+
+  if (path === '/api/auth/login' && request.method === 'POST') {
+    const dbErr = requireDb(env); if (dbErr) return dbErr;
+    const { username, password } = await request.json().catch(() => ({}));
+    const user = await env.DB.prepare('SELECT * FROM users WHERE username = ?').bind(username).first();
+    if (!user) return jsonResponse({ success: false, error: 'Identifiants incorrects.' }, 401);
+    const hash = await hashPassword(password, user.salt);
+    if (hash !== user.password_hash) return jsonResponse({ success: false, error: 'Identifiants incorrects.' }, 401);
+
+    // seed admin par défaut si table users vide gérée à la création
+    const token = uuid();
+    await env.DB.prepare('INSERT INTO sessions (token, user_id, expires_at) VALUES (?, ?, ?)')
+      .bind(token, user.id, Date.now() + SESSION_TTL_MS).run();
+
+    const res = jsonResponse({
+      success: true,
+      user: { id: user.id, username: user.username, role: user.role, nom: user.nom },
+    });
+    res.headers.append('Set-Cookie',
+      `${SESSION_COOKIE}=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${SESSION_TTL_MS / 1000}${url.protocol === 'https:' ? '; Secure' : ''}`);
+    return res;
+  }
+
+  if (path === '/api/auth/logout' && request.method === 'POST') {
+    const token = getCookie(request, SESSION_COOKIE);
+    if (token && env.DB) await env.DB.prepare('DELETE FROM sessions WHERE token = ?').bind(token).run();
+    const res = jsonResponse({ success: true });
+    res.headers.append('Set-Cookie', `${SESSION_COOKIE}=; Path=/; HttpOnly; Max-Age=0`);
+    return res;
+  }
+
+  if (path === '/api/auth/me' && request.method === 'GET') {
+    const user = await getSessionUser(request, env);
+    return jsonResponse(user ? { success: true, user } : { success: false }, user ? 200 : 401);
+  }
+
+  return null;
+}
+
+async function seedAdminIfEmpty(env: Env) {
+  if (!env.DB) return;
+  const count = await env.DB.prepare('SELECT COUNT(*) AS c FROM users').first();
+  if (count && count.c === 0) {
+    const salt = uuid();
+    const hash = await hashPassword('admin123', salt);
+    await env.DB.prepare('INSERT INTO users (id, username, password_hash, salt, role, nom) VALUES (?, ?, ?, ?, ?, ?)')
+      .bind(uuid(), 'admin', hash, salt, 'admin', 'Administrateur').run();
+    console.log('Admin par défaut créé : admin / admin123');
+  }
+}
+
+// ---- Users management (admin only) ----
+async function handleUsers(request: Request, env: Env, url: URL): Promise<Response | null> {
+  if (!url.pathname.startsWith('/api/users')) return null;
+  const dbErr = requireDb(env); if (dbErr) return dbErr;
+  const me = await getSessionUser(request, env);
+  if (!me) return jsonResponse({ success: false, error: 'Non authentifié.' }, 401);
+  if (me.role !== 'admin') return jsonResponse({ success: false, error: 'Accès réservé aux administrateurs.' }, 403);
+
+  if (url.pathname === '/api/users' && request.method === 'GET') {
+    const { results } = await env.DB.prepare('SELECT id, username, role, nom, created_at FROM users').all();
+    return jsonResponse({ success: true, users: results });
+  }
+
+  if (url.pathname === '/api/users' && request.method === 'POST') {
+    const { username, password, role, nom } = await request.json().catch(() => ({}));
+    if (!username || !password) return jsonResponse({ success: false, error: 'username et password requis.' }, 400);
+    const salt = uuid();
+    const hash = await hashPassword(password, salt);
+    try {
+      await env.DB.prepare('INSERT INTO users (id, username, password_hash, salt, role, nom) VALUES (?, ?, ?, ?, ?, ?)')
+        .bind(uuid(), username, hash, salt, role === 'admin' ? 'admin' : 'mecanicien', nom || '').run();
+    } catch {
+      return jsonResponse({ success: false, error: 'Ce nom d’utilisateur existe déjà.' }, 409);
+    }
+    return jsonResponse({ success: true });
+  }
+
+  const delMatch = url.pathname.match(/^\/api\/users\/([^/]+)$/);
+  if (delMatch && request.method === 'DELETE') {
+    if (delMatch[1] === me.id) return jsonResponse({ success: false, error: 'Vous ne pouvez pas supprimer votre propre compte.' }, 400);
+    await env.DB.prepare('DELETE FROM users WHERE id = ?').bind(delMatch[1]).run();
+    return jsonResponse({ success: true });
+  }
+  return null;
+}
+
+// ---- Data CRUD (authentifié) ----
+async function handleData(request: Request, env: Env, url: URL): Promise<Response | null> {
+  const m = url.pathname.match(/^\/api\/data\/([a-z]+)(?:\/([^/]+))?$/);
+  if (!m) return null;
+  const dbErr = requireDb(env); if (dbErr) return dbErr;
+  const me = await getSessionUser(request, env);
+  if (!me) return jsonResponse({ success: false, error: 'Non authentifié.' }, 401);
+
+  const coll = m[1];
+  const cfg = COLLECTIONS[coll];
+  if (!cfg) return jsonResponse({ success: false, error: 'Collection inconnue.' }, 404);
+  const id = m[2];
+
+  // GET /api/data/:coll → liste
+  if (!id && request.method === 'GET') {
+    const { results } = await env.DB.prepare(`SELECT data FROM ${cfg.table}`).all();
+    return jsonResponse({ success: true, items: results.map((r: any) => JSON.parse(r.data)) });
+  }
+
+  // PUT /api/data/:coll/replace → remplace toute la collection (sync frontend)
+  if (id === 'replace' && request.method === 'PUT') {
+    const items = await request.json().catch(() => null);
+    if (!Array.isArray(items)) return jsonResponse({ success: false, error: 'Tableau attendu.' }, 400);
+    const keepIds = items.map((i: any) => i.id);
+    const placeholders = keepIds.map(() => '?').join(',');
+    if (keepIds.length > 0) {
+      await env.DB.prepare(`DELETE FROM ${cfg.table} WHERE id NOT IN (${placeholders})`).bind(...keepIds).run();
+    } else {
+      await env.DB.prepare(`DELETE FROM ${cfg.table}`).run();
+    }
+    for (const item of items) {
+      const itemId = item.id;
+      const exists = await env.DB.prepare(`SELECT id FROM ${cfg.table} WHERE id = ?`).bind(itemId).first();
+      if (exists) {
+        await env.DB.prepare(`UPDATE ${cfg.table} SET data = ? WHERE id = ?`).bind(JSON.stringify(item), itemId).run();
+      } else {
+        await env.DB.prepare(`INSERT INTO ${cfg.table} (id, data) VALUES (?, ?)`).bind(itemId, JSON.stringify(item)).run();
+      }
+    }
+    return jsonResponse({ success: true });
+  }
+
+  // POST /api/data/:coll → upsert un item
+  if (!id && request.method === 'POST') {
+    const item = await request.json().catch(() => null);
+    if (!item || !item.id) return jsonResponse({ success: false, error: 'Item invalide.' }, 400);
+    const itemId = item.id;
+    const exists = await env.DB.prepare(`SELECT id FROM ${cfg.table} WHERE id = ?`).bind(itemId).first();
+    if (exists) {
+      await env.DB.prepare(`UPDATE ${cfg.table} SET data = ? WHERE id = ?`).bind(JSON.stringify(item), itemId).run();
+    } else {
+      const extraCols = ['client_id','vehicule_id','statut','intervention_id'].filter(c => item[c] !== undefined);
+      const cols = ['id', ...extraCols, 'data'];
+      const vals = [itemId, ...extraCols.map(c => item[c]), JSON.stringify(item)];
+      await env.DB.prepare(`INSERT INTO ${cfg.table} (${cols.join(',')}) VALUES (${cols.map(() => '?').join(',')})`).bind(...vals).run();
+    }
+    return jsonResponse({ success: true });
+  }
+
+  // PUT /api/data/:coll/:id → update
+  if (id && request.method === 'PUT') {
+    const item = await request.json().catch(() => null);
+    if (!item) return jsonResponse({ success: false, error: 'Item invalide.' }, 400);
+    await env.DB.prepare(`UPDATE ${cfg.table} SET data = ? WHERE id = ?`).bind(JSON.stringify(item), id).run();
+    return jsonResponse({ success: true });
+  }
+
+  // DELETE /api/data/:coll/:id
+  if (id && request.method === 'DELETE') {
+    await env.DB.prepare(`DELETE FROM ${cfg.table} WHERE id = ?`).bind(id).run();
+    return jsonResponse({ success: true });
+  }
+
+  return null;
+}
+
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
@@ -190,8 +408,23 @@ export default {
       if (request.method !== 'POST') {
         return jsonResponse({ success: false, error: 'Méthode non autorisée.' }, 405);
       }
+      // La détection nécessite une session
+      const user = await getSessionUser(request, env);
+      if (!user) return jsonResponse({ success: false, error: 'Non authentifié.' }, 401);
       return handleScan(request, env);
     }
+
+    const authRes = await handleAuth(request, env, url);
+    if (authRes) return authRes;
+
+    const usersRes = await handleUsers(request, env, url);
+    if (usersRes) return usersRes;
+
+    const dataRes = await handleData(request, env, url);
+    if (dataRes) return dataRes;
+
+    // Seed admin au premier accès API
+    if (env.DB && url.pathname.startsWith('/api/')) await seedAdminIfEmpty(env);
 
     if (url.pathname.startsWith('/api/')) {
       return jsonResponse({ success: false, error: 'Route API introuvable.' }, 404);

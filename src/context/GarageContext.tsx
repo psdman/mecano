@@ -8,6 +8,7 @@ import {
 } from '../data/seedData';
 import { calculateClientBalance, formatPrice } from '../utils/garageCalculations';
 import { TRANSLATIONS, Language } from '../utils/translations';
+import { api } from '../utils/api';
 
 interface GarageContextType {
   language: Language;
@@ -113,22 +114,46 @@ export const GarageProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
   });
 
-  // Sync to localStorage
+  // Hydratation depuis la base D1 (Cloudflare) au chargement
+  const [hydrated, setHydrated] = useState(false);
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        const collections: Array<[string, React.Dispatch<React.SetStateAction<any[]>>]> = [
+          ['clients', setClients], ['vehicles', setVehicles],
+          ['interventions', setInterventions], ['payments', setPayments],
+        ];
+        await Promise.all(collections.map(async ([coll, set]) => {
+          const res = await api.getCollection(coll);
+          if (alive && res.success && Array.isArray(res.items)) set(res.items);
+        }));
+      } catch { /* API indisponible → localStorage */ }
+      if (alive) setHydrated(true);
+    })();
+    return () => { alive = false; };
+  }, []);
+
+  // Sync localStorage + base D1
   useEffect(() => {
     localStorage.setItem(`${STORAGE_KEY}_clients`, JSON.stringify(clients));
-  }, [clients]);
+    if (hydrated) api.replaceCollection('clients', clients).catch(() => {});
+  }, [clients, hydrated]);
 
   useEffect(() => {
     localStorage.setItem(`${STORAGE_KEY}_vehicles`, JSON.stringify(vehicles));
-  }, [vehicles]);
+    if (hydrated) api.replaceCollection('vehicles', vehicles).catch(() => {});
+  }, [vehicles, hydrated]);
 
   useEffect(() => {
     localStorage.setItem(`${STORAGE_KEY}_interventions`, JSON.stringify(interventions));
-  }, [interventions]);
+    if (hydrated) api.replaceCollection('interventions', interventions).catch(() => {});
+  }, [interventions, hydrated]);
 
   useEffect(() => {
     localStorage.setItem(`${STORAGE_KEY}_payments`, JSON.stringify(payments));
-  }, [payments]);
+    if (hydrated) api.replaceCollection('payments', payments).catch(() => {});
+  }, [payments, hydrated]);
 
   const addClient = (clientData: Omit<Client, 'id' | 'createdAt'>): Client => {
     const newClient: Client = {
