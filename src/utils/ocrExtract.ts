@@ -185,7 +185,10 @@ export async function extractVehicleDataLocal(
   const fullText = texts.join('\n');
   const data = parseCarteGriseText(fullText);
 
-  // Considère le résultat utile s'il y a au moins immatriculation ou marque
-  if (!data.immatriculation && !data.marque && !data.vin) return null;
+  // Exige au moins 2 champs clés cohérents — sinon l'OCR a probablement mal lu
+  // et renvoyer des données erronées est pire qu'un message d'erreur.
+  const keyCount = [data.immatriculation, data.marque, data.vin, data.nomProprietaire]
+    .filter((v) => v && v.trim() !== '').length;
+  if (keyCount < 2) return null;
   return data;
 }
