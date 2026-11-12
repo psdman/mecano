@@ -439,7 +439,7 @@ export const ClientsBalances: React.FC = () => {
                     value={newNom}
                     onChange={(e) => setNewNom(e.target.value)}
                     required
-                    placeholder="EL AMRANI"
+                    placeholder="Nom de famille"
                     className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs"
                   />
                 </div>
@@ -449,7 +449,7 @@ export const ClientsBalances: React.FC = () => {
                     type="text"
                     value={newPrenom}
                     onChange={(e) => setNewPrenom(e.target.value)}
-                    placeholder="Mohamed"
+                    placeholder="Prénom"
                     className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs"
                   />
                 </div>

@@ -43,7 +43,7 @@ interface GarageContextType {
   setIsPaymentModalOpen: (open: boolean) => void;
 }
 
-const STORAGE_KEY = 'meca_scan_atelier_maroc_v2';
+const STORAGE_KEY = 'meca_scan_atelier_maroc_v3';
 
 const GarageContext = createContext<GarageContextType | undefined>(undefined);
 
