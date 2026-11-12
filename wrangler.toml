@@ -10,5 +10,5 @@ not_found_handling = "single-page-application"
 [[d1_databases]]
 binding = "DB"
 database_name = "mecano-db"
-database_id = "REPLACE_WITH_D1_DATABASE_ID"
+database_id = "409a3d05-625e-4fa4-a179-6eb7ca5e00da"
 migrations_dir = "migrations"

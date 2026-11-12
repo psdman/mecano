@@ -240,6 +240,7 @@ async function handleAuth(request: Request, env: Env, url: URL): Promise<Respons
 
   if (path === '/api/auth/login' && request.method === 'POST') {
     const dbErr = requireDb(env); if (dbErr) return dbErr;
+    await seedAdminIfEmpty(env); // crée admin/admin123 si table vide
     const { username, password } = await request.json().catch(() => ({}));
     const user = await env.DB.prepare('SELECT * FROM users WHERE username = ?').bind(username).first();
     if (!user) return jsonResponse({ success: false, error: 'Identifiants incorrects.' }, 401);
