@@ -61,6 +61,7 @@ Analyse attentivement la ou les photos fournies :
    - Champ (P.3) : Type de carburant / énergie (ex: ES pour Essence, GO pour Gazole/Diesel, EL pour Électrique, EE pour Hybride)
    - Champ (P.6) : Puissance administrative nationale (chevaux fiscaux CV)
    - Champ (J.1) : Genre national (ex: VP pour Véhicule Particulier, CTTE pour Camionnette...)
+   - Important : inspecte chaque image attentivement. Si un champ est difficile à lire sur une image, cherche-le sur une autre (ex: plaque du véhicule pour l'immatriculation, verso pour le propriétaire). Ne laisse un champ vide que s'il est vraiment illisible ou absent.
 
 Retourne impérativement un JSON structuré valide selon le schéma fourni.`;
 
@@ -209,18 +210,30 @@ async function callVisionProvider(
 async function analyzeWithFreeVisionApis(
   imageParts: { dataUrl: string }[]
 ): Promise<{ provider: string; data: any } | null> {
+  const KEY_FIELDS = ['immatriculation', 'marque', 'modele', 'vin', 'nomProprietaire'];
+  const scoreData = (d: any) =>
+    KEY_FIELDS.filter((k) => d && typeof d[k] === 'string' && d[k].trim() !== '').length;
+
+  let best: { provider: string; data: any; score: number } | null = null;
   let lastError: any = null;
+
   for (const provider of VISION_PROVIDERS) {
+    if (best && best.score >= KEY_FIELDS.length) break;
     try {
       const parsed = await callVisionProvider(provider, imageParts);
       if (parsed) {
-        return { provider: provider.name, data: parsed };
+        const score = scoreData(parsed);
+        console.log(`${provider.name}: score=${score}/5`);
+        if (!best || score > best.score) {
+          best = { provider: provider.name, data: parsed, score };
+        }
       }
     } catch (err: any) {
       lastError = err;
       console.warn(`${provider.name} indisponible:`, err?.message);
     }
   }
+  if (best && best.score > 0) return { provider: best.provider, data: best.data };
   if (lastError) throw lastError;
   return null;
 }
