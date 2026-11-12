@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useGarage } from '../context/GarageContext';
 import { CameraCaptureModal } from './CameraCaptureModal';
 import { LicensePlate } from './LicensePlate';
@@ -42,7 +42,19 @@ export const WorkflowScanner: React.FC = () => {
     t,
     isArabic,
     formatDH,
+    settings,
   } = useGarage();
+
+  // Applique les réglages admin (taux horaire, remise, TVA, acompte) quand ils sont chargés
+  useEffect(() => {
+    const n = (k: string) => settings[k] !== undefined ? Number(settings[k]) : NaN;
+    if (!isNaN(n('tauxHoraireHT'))) setTauxHoraireHT(n('tauxHoraireHT'));
+    if (!isNaN(n('mainDOeuvreHeures'))) setMainDOeuvreHeures(n('mainDOeuvreHeures'));
+    if (!isNaN(n('remiseHT'))) setRemiseHT(n('remiseHT'));
+    if (!isNaN(n('tauxTva'))) setTauxTva(n('tauxTva'));
+    if (!isNaN(n('depositAmount'))) setDepositAmount(n('depositAmount'));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [settings]);
 
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3 | 4 | 5>(1);
 

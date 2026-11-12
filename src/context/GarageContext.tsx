@@ -8,9 +8,13 @@ import {
 } from '../data/seedData';
 import { calculateClientBalance, formatPrice } from '../utils/garageCalculations';
 import { TRANSLATIONS, Language } from '../utils/translations';
-import { api } from '../utils/api';
+import { api, SessionUser } from '../utils/api';
 
 interface GarageContextType {
+  user: SessionUser | null;
+  isAdmin: boolean;
+  settings: Record<string, string>;
+  saveSettings: (s: Record<string, string>) => Promise<void>;
   language: Language;
   setLanguage: (lang: Language) => void;
   t: typeof TRANSLATIONS.fr;
@@ -20,8 +24,8 @@ interface GarageContextType {
   vehicles: Vehicle[];
   interventions: Intervention[];
   payments: Payment[];
-  activeTab: 'dashboard' | 'workflow' | 'interventions' | 'vehicles' | 'clients' | 'caisse';
-  setActiveTab: (tab: 'dashboard' | 'workflow' | 'interventions' | 'vehicles' | 'clients' | 'caisse') => void;
+  activeTab: 'dashboard' | 'workflow' | 'interventions' | 'vehicles' | 'clients' | 'caisse' | 'admin';
+  setActiveTab: (tab: 'dashboard' | 'workflow' | 'interventions' | 'vehicles' | 'clients' | 'caisse' | 'admin') => void;
   addClient: (client: Omit<Client, 'id' | 'createdAt'>) => Client;
   updateClient: (id: string, updates: Partial<Client>) => void;
   addVehicle: (vehicle: Omit<Vehicle, 'id' | 'createdAt'>) => Vehicle;
@@ -48,7 +52,7 @@ const STORAGE_KEY = 'meca_scan_atelier_maroc_v3';
 
 const GarageContext = createContext<GarageContextType | undefined>(undefined);
 
-export const GarageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const GarageProvider: React.FC<{ children: React.ReactNode; user?: SessionUser | null }> = ({ children, user = null }) => {
   const [language, setLanguageState] = useState<Language>(() => {
     try {
       const savedLang = localStorage.getItem(`${STORAGE_KEY}_lang`);
@@ -74,7 +78,13 @@ export const GarageProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     document.documentElement.dir = dir;
   }, [language, dir]);
 
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'workflow' | 'interventions' | 'vehicles' | 'clients' | 'caisse'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'workflow' | 'interventions' | 'vehicles' | 'clients' | 'caisse' | 'admin'>('dashboard');
+  const [settings, setSettings] = useState<Record<string, string>>({});
+
+  const saveSettings = async (s: Record<string, string>) => {
+    setSettings(s);
+    await api.saveSettings(s).catch(() => {});
+  };
   const [preselectedClientIdForPayment, setPreselectedClientIdForPayment] = useState<string | null>(null);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
 
@@ -128,6 +138,9 @@ export const GarageProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           const res = await api.getCollection(coll);
           if (alive && res.success && Array.isArray(res.items)) set(res.items);
         }));
+        // Charge aussi les réglages admin
+        const sRes = await api.getSettings();
+        if (alive && sRes.success && sRes.settings) setSettings(sRes.settings);
       } catch { /* API indisponible → localStorage */ }
       if (alive) setHydrated(true);
     })();
@@ -238,6 +251,10 @@ export const GarageProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   return (
     <GarageContext.Provider
       value={{
+        user,
+        isAdmin: user?.role === 'admin',
+        settings,
+        saveSettings,
         language,
         setLanguage,
         t,

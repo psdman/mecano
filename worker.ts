@@ -261,6 +261,20 @@ async function handleAuth(request: Request, env: Env, url: URL): Promise<Respons
     return res;
   }
 
+  if (path === '/api/auth/change-password' && request.method === 'POST') {
+    const dbErr = requireDb(env); if (dbErr) return dbErr;
+    const me = await getSessionUser(request, env);
+    if (!me) return jsonResponse({ success: false, error: 'Non authentifié.' }, 401);
+    const { oldPassword, newPassword } = await request.json().catch(() => ({}));
+    const user = await env.DB.prepare('SELECT * FROM users WHERE id = ?').bind(me.id).first();
+    const hash = await hashPassword(oldPassword || '', user.salt);
+    if (hash !== user.password_hash) return jsonResponse({ success: false, error: 'Ancien mot de passe incorrect.' }, 400);
+    const salt = uuid();
+    const newHash = await hashPassword(newPassword || '', salt);
+    await env.DB.prepare('UPDATE users SET password_hash = ?, salt = ? WHERE id = ?').bind(newHash, salt, me.id).run();
+    return jsonResponse({ success: true });
+  }
+
   if (path === '/api/auth/logout' && request.method === 'POST') {
     const token = getCookie(request, SESSION_COOKIE);
     if (token && env.DB) await env.DB.prepare('DELETE FROM sessions WHERE token = ?').bind(token).run();
@@ -320,6 +334,33 @@ async function handleUsers(request: Request, env: Env, url: URL): Promise<Respon
   if (delMatch && request.method === 'DELETE') {
     if (delMatch[1] === me.id) return jsonResponse({ success: false, error: 'Vous ne pouvez pas supprimer votre propre compte.' }, 400);
     await env.DB.prepare('DELETE FROM users WHERE id = ?').bind(delMatch[1]).run();
+    return jsonResponse({ success: true });
+  }
+  return null;
+}
+
+// ---- Settings (lecture: tout user connecté, écriture: admin) ----
+async function handleSettings(request: Request, env: Env, url: URL): Promise<Response | null> {
+  if (url.pathname !== '/api/settings') return null;
+  const dbErr = requireDb(env); if (dbErr) return dbErr;
+  const me = await getSessionUser(request, env);
+  if (!me) return jsonResponse({ success: false, error: 'Non authentifié.' }, 401);
+
+  if (request.method === 'GET') {
+    const { results } = await env.DB.prepare('SELECT key, value FROM settings').all();
+    const settings: Record<string, string> = {};
+    for (const r of results || []) settings[r.key] = r.value;
+    return jsonResponse({ success: true, settings });
+  }
+
+  if (request.method === 'PUT') {
+    if (me.role !== 'admin') return jsonResponse({ success: false, error: 'Réservé aux administrateurs.' }, 403);
+    const body = await request.json().catch(() => ({}));
+    for (const [key, value] of Object.entries(body || {})) {
+      if (typeof key !== 'string' || key.length > 64) continue;
+      await env.DB.prepare('INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value')
+        .bind(key, String(value)).run();
+    }
     return jsonResponse({ success: true });
   }
   return null;
@@ -420,6 +461,9 @@ export default {
 
     const usersRes = await handleUsers(request, env, url);
     if (usersRes) return usersRes;
+
+    const settingsRes = await handleSettings(request, env, url);
+    if (settingsRes) return settingsRes;
 
     const dataRes = await handleData(request, env, url);
     if (dataRes) return dataRes;

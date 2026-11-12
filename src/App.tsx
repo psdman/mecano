@@ -8,6 +8,7 @@ import { VehiclesList } from './components/VehiclesList';
 import { ClientsBalances } from './components/ClientsBalances';
 import { CaissePaiements } from './components/CaissePaiements';
 import { PaymentModal } from './components/PaymentModal';
+import { AdminPanel } from './components/AdminPanel';
 import { Login } from './components/Login';
 import { api, SessionUser } from './utils/api';
 import { LogOut } from 'lucide-react';
@@ -26,6 +27,7 @@ const AppContent: React.FC = () => {
         {activeTab === 'vehicles' && <VehiclesList />}
         {activeTab === 'clients' && <ClientsBalances />}
         {activeTab === 'caisse' && <CaissePaiements />}
+        {activeTab === 'admin' && <AdminPanel />}
       </main>
 
       <PaymentModal />
@@ -63,7 +65,7 @@ export default function App() {
     return <Login onLogin={setUser} />;
   }
   return (
-    <GarageProvider>
+    <GarageProvider user={user}>
       <AppContent />
     </GarageProvider>
   );

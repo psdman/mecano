@@ -24,6 +24,11 @@ export const api = {
   createUser: (u: { username: string; password: string; role: string; nom?: string }) =>
     req('/api/users', { method: 'POST', body: JSON.stringify(u) }),
   deleteUser: (id: string) => req(`/api/users/${id}`, { method: 'DELETE' }),
+  changePassword: (oldPassword: string, newPassword: string) =>
+    req('/api/auth/change-password', { method: 'POST', body: JSON.stringify({ oldPassword, newPassword }) }),
+  getSettings: () => req('/api/settings'),
+  saveSettings: (settings: Record<string, string>) =>
+    req('/api/settings', { method: 'PUT', body: JSON.stringify(settings) }),
   getCollection: (coll: string) => req(`/api/data/${coll}`),
   replaceCollection: (coll: string, items: any[]) =>
     req(`/api/data/${coll}/replace`, { method: 'PUT', body: JSON.stringify(items) }),

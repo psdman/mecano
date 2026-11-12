@@ -1,9 +1,9 @@
 import React from 'react';
 import { useGarage } from '../context/GarageContext';
-import { Wrench, Plus, Languages } from 'lucide-react';
+import { Wrench, Plus, Languages, ShieldCheck } from 'lucide-react';
 
 export const Navigation: React.FC = () => {
-  const { activeTab, setActiveTab, language, setLanguage, t, isArabic } = useGarage();
+  const { activeTab, setActiveTab, language, setLanguage, t, isArabic, isAdmin } = useGarage();
 
   const toggleLanguage = () => {
     setLanguage(language === 'fr' ? 'ar' : 'fr');
@@ -93,6 +93,18 @@ export const Navigation: React.FC = () => {
             >
               {t.caisse}
             </button>
+            {isAdmin && (
+              <button
+                onClick={() => setActiveTab('admin')}
+                className={`whitespace-nowrap shrink-0 transition-colors cursor-pointer py-1 inline-flex items-center gap-1 ${
+                  activeTab === 'admin'
+                    ? 'text-slate-900 font-bold border-b-2 border-amber-500'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <ShieldCheck className="w-3.5 h-3.5" /> Admin
+              </button>
+            )}
           </nav>
 
           {/* Zone 3: Language toggle & CTA */}
