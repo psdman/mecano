@@ -83,6 +83,7 @@ export const WorkflowScanner: React.FC = () => {
   const [mainDOeuvreHeures, setMainDOeuvreHeures] = useState<number>(1.5);
   const [tauxHoraireHT, setTauxHoraireHT] = useState<number>(80);
   const [remiseHT, setRemiseHT] = useState<number>(30);
+  const [tauxTva, setTauxTva] = useState<number>(20);
 
   // Immediate deposit in DH
   const [withDeposit, setWithDeposit] = useState(false);
@@ -294,7 +295,7 @@ export const WorkflowScanner: React.FC = () => {
     mainDOeuvreHeures,
     tauxHoraireHT,
     remiseHT,
-    0
+    tauxTva
   );
 
   const handleFinalSubmit = () => {
@@ -344,8 +345,8 @@ export const WorkflowScanner: React.FC = () => {
       totalMainDOeuvreHT: totals.totalMainDOeuvreHT,
       remiseHT: totals.remiseHT,
       totalHT: totals.totalHT,
-      tauxTva: 0,
-      totalTva: 0,
+      tauxTva: totals.tauxTva,
+      totalTva: totals.totalTva,
       totalTTC: totals.totalTTC,
     });
 
@@ -982,6 +983,19 @@ export const WorkflowScanner: React.FC = () => {
                 />
               </div>
 
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">{t.vatRate}</label>
+                <input
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="0.5"
+                  value={tauxTva}
+                  onChange={(e) => setTauxTva(Number(e.target.value))}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs font-mono"
+                />
+              </div>
+
               <div className="pt-2 border-t border-slate-100">
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
@@ -1039,6 +1053,16 @@ export const WorkflowScanner: React.FC = () => {
                     <div className="flex justify-between py-1 border-b border-slate-800 text-amber-400">
                       <span>{t.discount}</span>
                       <span className="font-mono">-{formatDH(totals.remiseHT)}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between py-1 border-b border-slate-800">
+                    <span className="text-slate-400">{t.totalHt}</span>
+                    <span className="font-mono">{formatDH(totals.totalHT)}</span>
+                  </div>
+                  {totals.tauxTva > 0 && (
+                    <div className="flex justify-between py-1 border-b border-slate-800">
+                      <span className="text-slate-400">{t.totalVat} ({totals.tauxTva}%)</span>
+                      <span className="font-mono">{formatDH(totals.totalTva)}</span>
                     </div>
                   )}
                 </div>
