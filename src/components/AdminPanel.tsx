@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useGarage } from '../context/GarageContext';
 import { api } from '../utils/api';
-import { ShieldCheck, UserPlus, Trash2, KeyRound, Save, Settings2 } from 'lucide-react';
+import { ShieldCheck, UserPlus, Trash2, KeyRound, Save, Settings2, Building2, Upload } from 'lucide-react';
+import { compressImageForUpload } from '../utils/imageCompress';
 
 interface UserRow { id: string; username: string; role: string; nom?: string; created_at: string }
 
@@ -37,6 +38,17 @@ export const AdminPanel: React.FC = () => {
     if (r.success) setPwd({ old: '', next: '', confirm: '' });
   };
   const saveGarage = async () => { await saveSettings(local); setMsg('Réglages enregistrés.'); };
+
+  const onLogoFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = async () => {
+      const compressed = await compressImageForUpload(String(reader.result), 400);
+      setLocal({ ...local, garageLogo: compressed });
+    };
+    reader.readAsDataURL(file);
+  };
 
   const num = (k: string, d = '') => local[k] ?? settings[k] ?? d;
 
@@ -108,6 +120,60 @@ export const AdminPanel: React.FC = () => {
             <Save className="w-3.5 h-3.5" /> Enregistrer les réglages
           </button>
         </div>
+      </div>
+
+      {/* Identité du garage */}
+      <div className="bg-white border border-slate-200 rounded-xl p-5 space-y-4">
+        <h2 className="text-sm font-extrabold text-slate-900 flex items-center gap-2"><Building2 className="w-4 h-4 text-amber-500" /> Identité du garage</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="space-y-3">
+            <div>
+              <label className="block text-[11px] font-bold text-slate-600 mb-1">Nom du garage</label>
+              <input value={num('garageNom', 'MecaScan Atelier')} onChange={(e) => setLocal({ ...local, garageNom: e.target.value })}
+                className="w-full px-2.5 py-1.5 border border-slate-300 rounded-md text-xs" />
+            </div>
+            <div>
+              <label className="block text-[11px] font-bold text-slate-600 mb-1">Adresse</label>
+              <input value={num('garageAdresse')} onChange={(e) => setLocal({ ...local, garageAdresse: e.target.value })}
+                className="w-full px-2.5 py-1.5 border border-slate-300 rounded-md text-xs" placeholder="Ex: 12 Rue X, Casablanca" />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-[11px] font-bold text-slate-600 mb-1">Téléphone</label>
+                <input value={num('garageTelephone')} onChange={(e) => setLocal({ ...local, garageTelephone: e.target.value })}
+                  className="w-full px-2.5 py-1.5 border border-slate-300 rounded-md text-xs" placeholder="06 XX XX XX XX" />
+              </div>
+              <div>
+                <label className="block text-[11px] font-bold text-slate-600 mb-1">Email</label>
+                <input value={num('garageEmail')} onChange={(e) => setLocal({ ...local, garageEmail: e.target.value })}
+                  className="w-full px-2.5 py-1.5 border border-slate-300 rounded-md text-xs" placeholder="contact@garage.ma" />
+              </div>
+            </div>
+          </div>
+          <div>
+            <label className="block text-[11px] font-bold text-slate-600 mb-1">Logo du garage</label>
+            <div className="flex items-center gap-3">
+              {local.garageLogo ? (
+                <img src={local.garageLogo} alt="logo" className="w-16 h-16 object-contain border border-slate-200 rounded-lg bg-slate-50" />
+              ) : (
+                <div className="w-16 h-16 border-2 border-dashed border-slate-300 rounded-lg flex items-center justify-center text-slate-300">
+                  <Building2 className="w-6 h-6" />
+                </div>
+              )}
+              <label className="inline-flex items-center gap-2 px-3 py-2 border border-slate-300 rounded-lg text-xs font-bold text-slate-700 hover:bg-slate-50 cursor-pointer">
+                <Upload className="w-3.5 h-3.5" /> Choisir une image
+                <input type="file" accept="image/*" onChange={onLogoFile} className="hidden" />
+              </label>
+            </div>
+            {local.garageLogo && (
+              <button onClick={() => setLocal({ ...local, garageLogo: '' })}
+                className="mt-2 text-[11px] text-red-500 font-bold hover:underline cursor-pointer">Supprimer le logo</button>
+            )}
+          </div>
+        </div>
+        <button onClick={saveGarage} className="px-4 py-2 bg-amber-400 text-slate-950 text-xs font-extrabold rounded-lg hover:bg-amber-300 cursor-pointer inline-flex items-center gap-1.5">
+          <Save className="w-3.5 h-3.5" /> Enregistrer l'identité
+        </button>
       </div>
 
       {/* Mot de passe */}

@@ -6,7 +6,9 @@ import { api } from '../utils/api';
 interface TabDef { id: string; label: string; icon: React.ReactNode }
 
 export const Navigation: React.FC = () => {
-  const { activeTab, setActiveTab, language, setLanguage, t, isArabic, isAdmin, user } = useGarage();
+  const { activeTab, setActiveTab, language, setLanguage, t, isArabic, isAdmin, user, settings } = useGarage();
+  const garageName = settings.garageNom || t.appName;
+  const garageLogo = settings.garageLogo;
 
   const tabs: TabDef[] = [
     { id: 'dashboard', label: t.dashboard, icon: <LayoutDashboard className="w-4 h-4" /> },
@@ -31,11 +33,15 @@ export const Navigation: React.FC = () => {
       <aside className="hidden lg:flex flex-col fixed inset-y-0 left-0 w-60 bg-slate-950 text-white z-40 no-print">
         {/* Logo */}
         <button onClick={() => setActiveTab('dashboard')} className="flex items-center gap-3 px-5 h-16 border-b border-slate-800/80 cursor-pointer">
-          <div className="w-9 h-9 rounded-xl bg-amber-400 flex items-center justify-center shadow-lg shadow-amber-400/20">
-            <Wrench className="w-5 h-5 text-slate-950" />
-          </div>
+          {garageLogo ? (
+            <img src={garageLogo} alt="logo" className="w-9 h-9 rounded-xl object-contain bg-white shadow-lg" />
+          ) : (
+            <div className="w-9 h-9 rounded-xl bg-amber-400 flex items-center justify-center shadow-lg shadow-amber-400/20">
+              <Wrench className="w-5 h-5 text-slate-950" />
+            </div>
+          )}
           <div className="text-left">
-            <div className="text-base font-extrabold tracking-tight leading-tight">{t.appName}</div>
+            <div className="text-base font-extrabold tracking-tight leading-tight truncate max-w-[140px]">{garageName}</div>
             <div className="text-[10px] text-slate-500 font-medium">{isArabic ? 'كراج mecanique' : 'Garage Mécanique'}</div>
           </div>
         </button>
