@@ -7,6 +7,7 @@ import {
 } from '../utils/garageCalculations';
 import { COMMON_MOROCCAN_PARTS } from '../utils/translations';
 import { suggestCorrection } from '../utils/spellcheck';
+import { compressImageForUpload } from '../utils/imageCompress';
 import { ReplacedPart, PaymentMethod } from '../types/garage';
 import {
   Camera,
@@ -139,13 +140,21 @@ export const WorkflowScanner: React.FC = () => {
     setScanError(null);
 
     try {
+      // Compresse les photos côté client (payload plus léger pour l'API)
+      const [vehicleCompressed, carteGriseCompressed, carteGriseVersoCompressed] =
+        await Promise.all([
+          vehiclePhoto ? compressImageForUpload(vehiclePhoto) : null,
+          carteGrisePhoto ? compressImageForUpload(carteGrisePhoto) : null,
+          carteGriseVersoPhoto ? compressImageForUpload(carteGriseVersoPhoto) : null,
+        ]);
+
       const response = await fetch('/api/scan-vehicle-registration', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          vehicleImage: vehiclePhoto,
-          carteGriseImage: carteGrisePhoto,
-          carteGriseVersoImage: carteGriseVersoPhoto,
+          vehicleImage: vehicleCompressed,
+          carteGriseImage: carteGriseCompressed,
+          carteGriseVersoImage: carteGriseVersoCompressed,
         }),
       });
 
