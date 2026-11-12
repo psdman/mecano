@@ -1,4 +1,5 @@
 import { createWorker } from 'tesseract.js';
+import { compressImageForUpload } from './imageCompress';
 
 /**
  * OCR local (Tesseract.js, gratuit, sans API) — fallback quand les APIs vision échouent.
@@ -28,10 +29,12 @@ function getWorker() {
   return workerPromise;
 }
 
-/** Extrait le texte brut d'une image (data URL). */
+/** Extrait le texte brut d'une image (data URL), en la réduisant d'abord pour la rapidité. */
 export async function ocrImageText(dataUrl: string): Promise<string> {
   const worker = await getWorker();
-  const { data } = await worker.recognize(dataUrl);
+  // Réduction à ~1000px : l'OCR n'a pas besoin de plus et c'est 3-4x plus rapide sur mobile
+  const prepared = await compressImageForUpload(dataUrl, 1000);
+  const { data } = await worker.recognize(prepared);
   return data.text || '';
 }
 
