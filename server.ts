@@ -215,7 +215,7 @@ async function analyzeWithFreeVisionApis(
     KEY_FIELDS.filter((k) => d && typeof d[k] === 'string' && d[k].trim() !== '').length;
 
   let best: { provider: string; data: any; score: number } | null = null;
-  let lastError: any = null;
+  const errors: string[] = [];
 
   for (const provider of VISION_PROVIDERS) {
     if (best && best.score >= KEY_FIELDS.length) break;
@@ -227,15 +227,16 @@ async function analyzeWithFreeVisionApis(
         if (!best || score > best.score) {
           best = { provider: provider.name, data: parsed, score };
         }
+      } else {
+        errors.push(`${provider.name}: aucun champ détecté`);
       }
     } catch (err: any) {
-      lastError = err;
+      errors.push(`${provider.name}: ${err?.message || 'erreur'}`);
       console.warn(`${provider.name} indisponible:`, err?.message);
     }
   }
   if (best && best.score > 0) return { provider: best.provider, data: best.data };
-  if (lastError) throw lastError;
-  return null;
+  throw new Error(errors.join(' | ') || 'Aucun provider vision disponible');
 }
 
 /**

@@ -147,7 +147,7 @@ async function handleScan(request: Request, env: Env): Promise<Response> {
     KEY_FIELDS.filter((k) => d && typeof d[k] === 'string' && d[k].trim() !== '').length;
 
   let best: { provider: string; data: any; score: number } | null = null;
-  let lastError: any = null;
+  const errors: string[] = [];
 
   for (const provider of getProviders(env)) {
     // Si on a déjà tous les champs clés, inutile d'insister
@@ -160,9 +160,11 @@ async function handleScan(request: Request, env: Env): Promise<Response> {
         if (!best || score > best.score) {
           best = { provider: provider.name, data: parsed, score };
         }
+      } else {
+        errors.push(`${provider.name}: aucun champ détecté`);
       }
     } catch (err: any) {
-      lastError = err;
+      errors.push(`${provider.name}: ${err?.message || 'erreur'}`);
       console.warn(`${provider.name} indisponible:`, err?.message);
     }
   }
@@ -174,7 +176,7 @@ async function handleScan(request: Request, env: Env): Promise<Response> {
   return jsonResponse(
     {
       success: false,
-      error: `La détection automatique a échoué${lastError?.message ? ` (${lastError.message})` : ''}. Réessayez ou saisissez les informations manuellement.`,
+      error: `La détection automatique a échoué. Réessayez ou saisissez les informations manuellement. (${errors.join(' | ') || 'aucun provider configuré'})`,
     },
     502
   );
