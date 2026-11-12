@@ -11,7 +11,6 @@ import { PaymentModal } from './components/PaymentModal';
 import { AdminPanel } from './components/AdminPanel';
 import { Login } from './components/Login';
 import { api, SessionUser } from './utils/api';
-import { LogOut } from 'lucide-react';
 
 const AppContent: React.FC = () => {
   const { activeTab } = useGarage();
@@ -20,7 +19,7 @@ const AppContent: React.FC = () => {
     <div className="min-h-screen bg-slate-100/60 text-slate-900 flex flex-col font-sans">
       <Navigation />
 
-      <main className="flex-1">
+      <main className="flex-1 lg:pl-60 pb-20 lg:pb-0">
         {activeTab === 'dashboard' && <Dashboard />}
         {activeTab === 'workflow' && <WorkflowScanner />}
         {activeTab === 'interventions' && <InterventionsList />}
@@ -39,12 +38,6 @@ const AppContent: React.FC = () => {
             <span>·</span>
             <span>Logiciel d’aide au garagiste et mécanicien</span>
           </div>
-          <button
-            onClick={async () => { await api.logout(); window.location.reload(); }}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-slate-600 hover:text-red-600 hover:bg-red-50 rounded-md cursor-pointer"
-          >
-            <LogOut className="w-3.5 h-3.5" /> Déconnexion
-          </button>
         </div>
       </footer>
     </div>

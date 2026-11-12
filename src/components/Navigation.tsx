@@ -1,178 +1,111 @@
 import React from 'react';
 import { useGarage } from '../context/GarageContext';
-import { Wrench, Plus, Languages, ShieldCheck } from 'lucide-react';
+import { Wrench, Plus, Languages, ShieldCheck, LogOut, LayoutDashboard, ClipboardList, Car, Users, Wallet, ScanLine } from 'lucide-react';
+import { api } from '../utils/api';
+
+interface TabDef { id: string; label: string; icon: React.ReactNode }
 
 export const Navigation: React.FC = () => {
-  const { activeTab, setActiveTab, language, setLanguage, t, isArabic, isAdmin } = useGarage();
+  const { activeTab, setActiveTab, language, setLanguage, t, isArabic, isAdmin, user } = useGarage();
 
-  const toggleLanguage = () => {
-    setLanguage(language === 'fr' ? 'ar' : 'fr');
-  };
+  const tabs: TabDef[] = [
+    { id: 'dashboard', label: t.dashboard, icon: <LayoutDashboard className="w-4 h-4" /> },
+    { id: 'workflow', label: t.workflow, icon: <ScanLine className="w-4 h-4" /> },
+    { id: 'interventions', label: t.interventions, icon: <ClipboardList className="w-4 h-4" /> },
+    { id: 'vehicles', label: t.vehicles, icon: <Car className="w-4 h-4" /> },
+    { id: 'clients', label: t.clients, icon: <Users className="w-4 h-4" /> },
+    { id: 'caisse', label: t.caisse, icon: <Wallet className="w-4 h-4" /> },
+    ...(isAdmin ? [{ id: 'admin', label: 'Admin', icon: <ShieldCheck className="w-4 h-4" /> }] : []),
+  ];
+
+  const itemCls = (id: string) =>
+    `w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all cursor-pointer ${
+      activeTab === id
+        ? 'bg-amber-400 text-slate-950 shadow-sm'
+        : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+    }`;
 
   return (
-    <header className="sticky top-0 z-40 bg-white border-b border-slate-200">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between gap-6 h-16">
-          {/* Zone 1: Wordmark */}
+    <>
+      {/* ===== Sidebar desktop ===== */}
+      <aside className="hidden lg:flex flex-col fixed inset-y-0 left-0 w-60 bg-slate-950 text-white z-40 no-print">
+        {/* Logo */}
+        <button onClick={() => setActiveTab('dashboard')} className="flex items-center gap-3 px-5 h-16 border-b border-slate-800/80 cursor-pointer">
+          <div className="w-9 h-9 rounded-xl bg-amber-400 flex items-center justify-center shadow-lg shadow-amber-400/20">
+            <Wrench className="w-5 h-5 text-slate-950" />
+          </div>
+          <div className="text-left">
+            <div className="text-base font-extrabold tracking-tight leading-tight">{t.appName}</div>
+            <div className="text-[10px] text-slate-500 font-medium">{isArabic ? 'كراج mecanique' : 'Garage Mécanique'}</div>
+          </div>
+        </button>
+
+        {/* CTA */}
+        <div className="px-4 pt-4">
           <button
-            onClick={() => setActiveTab('dashboard')}
-            className="flex items-center gap-2.5 text-left shrink-0 cursor-pointer group"
+            onClick={() => setActiveTab('workflow')}
+            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-amber-400 hover:bg-amber-300 text-slate-950 text-sm font-extrabold rounded-xl shadow-md shadow-amber-400/10 transition-colors cursor-pointer"
           >
-            <div className="w-8 h-8 rounded-lg bg-amber-500 text-slate-950 flex items-center justify-center font-bold shadow-xs group-hover:bg-amber-400 transition-colors">
-              <Wrench className="w-4 h-4" />
-            </div>
-            <div>
-              <span className="text-base sm:text-lg font-bold tracking-tight text-slate-900 whitespace-nowrap block leading-tight">
-                {t.appName}
-              </span>
-              <span className="text-[10px] text-slate-400 font-medium block">
-                {isArabic ? 'المغرب 🇲🇦' : 'Atelier Maroc 🇲🇦'}
-              </span>
-            </div>
+            <Plus className="w-4 h-4" /> {t.newEntry}
           </button>
+        </div>
 
-          {/* Zone 2: Navigation links */}
-          <nav className="hidden lg:flex items-center gap-5 text-sm font-medium">
-            <button
-              onClick={() => setActiveTab('dashboard')}
-              className={`whitespace-nowrap shrink-0 transition-colors cursor-pointer py-1 ${
-                activeTab === 'dashboard'
-                  ? 'text-slate-900 font-bold border-b-2 border-amber-500'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              {t.dashboard}
+        {/* Menu */}
+        <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+          {tabs.map((tab) => (
+            <button key={tab.id} onClick={() => setActiveTab(tab.id as any)} className={itemCls(tab.id)}>
+              {tab.icon}
+              <span>{tab.label}</span>
             </button>
-            <button
-              onClick={() => setActiveTab('workflow')}
-              className={`whitespace-nowrap shrink-0 transition-colors cursor-pointer py-1 ${
-                activeTab === 'workflow'
-                  ? 'text-slate-900 font-bold border-b-2 border-amber-500'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              {t.workflow}
-            </button>
-            <button
-              onClick={() => setActiveTab('interventions')}
-              className={`whitespace-nowrap shrink-0 transition-colors cursor-pointer py-1 ${
-                activeTab === 'interventions'
-                  ? 'text-slate-900 font-bold border-b-2 border-amber-500'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              {t.interventions}
-            </button>
-            <button
-              onClick={() => setActiveTab('vehicles')}
-              className={`whitespace-nowrap shrink-0 transition-colors cursor-pointer py-1 ${
-                activeTab === 'vehicles'
-                  ? 'text-slate-900 font-bold border-b-2 border-amber-500'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              {t.vehicles}
-            </button>
-            <button
-              onClick={() => setActiveTab('clients')}
-              className={`whitespace-nowrap shrink-0 transition-colors cursor-pointer py-1 ${
-                activeTab === 'clients'
-                  ? 'text-slate-900 font-bold border-b-2 border-amber-500'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              {t.clients}
-            </button>
-            <button
-              onClick={() => setActiveTab('caisse')}
-              className={`whitespace-nowrap shrink-0 transition-colors cursor-pointer py-1 ${
-                activeTab === 'caisse'
-                  ? 'text-slate-900 font-bold border-b-2 border-amber-500'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              {t.caisse}
-            </button>
-            {isAdmin && (
-              <button
-                onClick={() => setActiveTab('admin')}
-                className={`whitespace-nowrap shrink-0 transition-colors cursor-pointer py-1 inline-flex items-center gap-1 ${
-                  activeTab === 'admin'
-                    ? 'text-slate-900 font-bold border-b-2 border-amber-500'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                <ShieldCheck className="w-3.5 h-3.5" /> Admin
-              </button>
-            )}
-          </nav>
+          ))}
+        </nav>
 
-          {/* Zone 3: Language toggle & CTA */}
-          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-            {/* Multilingual Switcher Button */}
+        {/* Bottom: langue + user + logout */}
+        <div className="px-4 py-4 border-t border-slate-800/80 space-y-2">
+          <button
+            onClick={() => setLanguage(language === 'fr' ? 'ar' : 'fr')}
+            className="w-full flex items-center justify-center gap-2 px-3 py-2 border border-slate-700 hover:bg-slate-800 rounded-lg text-xs font-bold text-slate-300 transition-colors cursor-pointer"
+          >
+            <Languages className="w-3.5 h-3.5 text-amber-400" />
+            {language === 'fr' ? 'العربية' : 'Français'}
+          </button>
+          <div className="flex items-center justify-between px-2 pt-1">
+            <span className="text-[11px] text-slate-500 truncate">{user?.username}</span>
             <button
-              onClick={toggleLanguage}
-              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 border border-slate-300 hover:bg-slate-100 rounded-lg text-xs font-bold text-slate-800 transition-colors cursor-pointer"
-              title={isArabic ? 'Passer en Français' : 'التحويل إلى العربية'}
+              onClick={async () => { await api.logout(); window.location.reload(); }}
+              className="p-1.5 text-slate-500 hover:text-red-400 hover:bg-slate-800 rounded-md cursor-pointer"
+              title="Déconnexion"
             >
-              <Languages className="w-3.5 h-3.5 text-amber-500" />
-              <span>{isArabic ? 'Français' : 'العربية'}</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('workflow')}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-slate-950 bg-amber-400 hover:bg-amber-300 rounded-lg shadow-xs transition-colors whitespace-nowrap shrink-0 cursor-pointer"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span>{t.newEntry}</span>
+              <LogOut className="w-4 h-4" />
             </button>
           </div>
         </div>
+      </aside>
 
-        {/* Mobile secondary navigation strip */}
-        <div className="flex lg:hidden items-center gap-2 overflow-x-auto py-2.5 border-t border-slate-100 text-xs font-medium scrollbar-none">
+      {/* ===== Barre mobile (bas d'écran) ===== */}
+      <nav className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-slate-950/95 backdrop-blur border-t border-slate-800 no-print">
+        <div className="flex items-center justify-around px-1 py-1.5 overflow-x-auto">
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id as any)}
+              className={`flex flex-col items-center gap-0.5 px-2 py-1 rounded-lg min-w-[52px] cursor-pointer ${
+                activeTab === tab.id ? 'text-amber-400' : 'text-slate-500'
+              }`}
+            >
+              {tab.icon}
+              <span className="text-[9px] font-bold truncate max-w-[52px]">{tab.label}</span>
+            </button>
+          ))}
           <button
-            onClick={() => setActiveTab('dashboard')}
-            className={`whitespace-nowrap px-2.5 py-1 rounded-md ${
-              activeTab === 'dashboard' ? 'bg-slate-900 text-white font-bold' : 'text-slate-600'
-            }`}
+            onClick={() => setLanguage(language === 'fr' ? 'ar' : 'fr')}
+            className="flex flex-col items-center gap-0.5 px-2 py-1 text-slate-500 cursor-pointer"
           >
-            {t.dashboard}
-          </button>
-          <button
-            onClick={() => setActiveTab('workflow')}
-            className={`whitespace-nowrap px-2.5 py-1 rounded-md ${
-              activeTab === 'workflow' ? 'bg-amber-400 text-slate-950 font-bold' : 'text-slate-600'
-            }`}
-          >
-            {t.workflow}
-          </button>
-          <button
-            onClick={() => setActiveTab('interventions')}
-            className={`whitespace-nowrap px-2.5 py-1 rounded-md ${
-              activeTab === 'interventions' ? 'bg-slate-900 text-white font-bold' : 'text-slate-600'
-            }`}
-          >
-            {t.interventions}
-          </button>
-          <button
-            onClick={() => setActiveTab('clients')}
-            className={`whitespace-nowrap px-2.5 py-1 rounded-md ${
-              activeTab === 'clients' ? 'bg-slate-900 text-white font-bold' : 'text-slate-600'
-            }`}
-          >
-            {t.clients}
-          </button>
-          <button
-            onClick={() => setActiveTab('caisse')}
-            className={`whitespace-nowrap px-2.5 py-1 rounded-md ${
-              activeTab === 'caisse' ? 'bg-slate-900 text-white font-bold' : 'text-slate-600'
-            }`}
-          >
-            {t.caisse}
+            <Languages className="w-4 h-4" />
+            <span className="text-[9px] font-bold">{language === 'fr' ? 'ع' : 'FR'}</span>
           </button>
         </div>
-      </div>
-    </header>
+      </nav>
+    </>
   );
 };
