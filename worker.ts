@@ -88,7 +88,7 @@ async function callVisionProvider(
     });
 
     if (response.status === 429 && attempt < 2) {
-      await sleep(4000 * (attempt + 1));
+      await sleep(2000 * (attempt + 1));
       continue;
     }
 
@@ -444,6 +444,16 @@ async function handleData(request: Request, env: Env, url: URL): Promise<Respons
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
+    try {
+      return await routeRequest(request, env);
+    } catch (err: any) {
+      console.error('Worker error:', err);
+      return jsonResponse({ success: false, error: `Erreur serveur: ${err?.message || 'inconnue'}` }, 500);
+    }
+  },
+};
+
+async function routeRequest(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
 
     if (url.pathname === '/api/scan-vehicle-registration') {
@@ -482,5 +492,4 @@ export default {
       return env.ASSETS.fetch(new Request(indexUrl.toString(), request));
     }
     return assetResponse;
-  },
-};
+}

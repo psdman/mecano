@@ -561,7 +561,14 @@ export const WorkflowScanner: React.FC = () => {
             </div>
           </div>
 
-          <div className="pt-2 flex justify-end">
+          <div className="pt-2 flex justify-end gap-3">
+            <button
+              onClick={() => setCurrentStep(2)}
+              className="inline-flex items-center gap-2 px-5 py-3 border border-slate-300 hover:bg-slate-100 text-slate-700 font-bold text-sm rounded-xl cursor-pointer transition-colors"
+            >
+              <FileText className="w-4 h-4" />
+              <span>{isArabic ? 'إدخال يدوي' : 'Saisie manuelle'}</span>
+            </button>
             <button
               onClick={handleRunAiDetection}
               disabled={isAnalyzing || (!vehiclePhoto && !carteGrisePhoto)}
