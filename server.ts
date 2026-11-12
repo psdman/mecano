@@ -340,7 +340,7 @@ app.post('/api/scan-vehicle-registration', async (req, res) => {
         parts.push({ text: promptText });
 
         const response = await aiClient.models.generateContent({
-          model: 'gemini-2.5-flash-lite',
+          model: 'gemini-3.5-flash-lite',
           contents: { parts },
           config: {
             responseMimeType: 'application/json',
@@ -358,7 +358,7 @@ app.post('/api/scan-vehicle-registration', async (req, res) => {
         if (parsedData && parsedData.immatriculation) {
           return res.json({
             success: true,
-            source: 'gemini-2.5-flash-lite',
+            source: 'gemini-3.5-flash-lite',
             data: parsedData,
           });
         }

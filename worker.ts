@@ -40,9 +40,9 @@ function getProviders(env: Env): VisionProvider[] {
   const providers: VisionProvider[] = [];
   if (env.GEMINI_API_KEY) {
     providers.push({
-      name: 'gemini-2.5-flash-lite',
+      name: 'gemini-3.5-flash-lite',
       url: 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',
-      model: 'gemini-2.5-flash-lite',
+      model: 'gemini-3.5-flash-lite',
       apiKey: env.GEMINI_API_KEY,
     });
   }
