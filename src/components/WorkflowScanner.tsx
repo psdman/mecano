@@ -8,6 +8,7 @@ import {
 import { COMMON_MOROCCAN_PARTS } from '../utils/translations';
 import { suggestCorrection } from '../utils/spellcheck';
 import { compressImageForUpload } from '../utils/imageCompress';
+import { extractVehicleDataLocal } from '../utils/ocrExtract';
 import { ReplacedPart, PaymentMethod } from '../types/garage';
 import {
   Camera,
@@ -201,6 +202,46 @@ export const WorkflowScanner: React.FC = () => {
         throw new Error(resData.error || 'Erreur détection');
       }
     } catch (err: any) {
+      // Fallback OCR local (Tesseract.js) quand les APIs vision échouent
+      try {
+        const localData = await extractVehicleDataLocal({
+          carteGrise: carteGrisePhoto,
+          carteGriseVerso: carteGriseVersoPhoto,
+          vehicle: vehiclePhoto,
+        });
+        if (localData && (localData.immatriculation || localData.marque)) {
+          if (localData.immatriculation) setDetectedPlate(formatMoroccanLicensePlate(localData.immatriculation));
+          if (localData.nomProprietaire) setDetectedNom(localData.nomProprietaire);
+          if (localData.prenomProprietaire) setDetectedPrenom(localData.prenomProprietaire);
+          if (localData.adresseProprietaire) setDetectedAdresse(localData.adresseProprietaire);
+          if (localData.marque) setDetectedMarque(localData.marque);
+          if (localData.modele) setDetectedModele(localData.modele);
+          if (localData.vin) setDetectedVin(localData.vin);
+          if (localData.dateMiseEnCirculation) setDetectedDateMec(localData.dateMiseEnCirculation);
+          if (localData.carburant) setDetectedCarburant(localData.carburant);
+
+          const fullName = `${localData.prenomProprietaire || ''} ${localData.nomProprietaire || ''}`.trim().toLowerCase();
+          const existing = clients.find((c) =>
+            c.nomComplet.toLowerCase().includes(fullName) ||
+            c.nom.toLowerCase().includes((localData.nomProprietaire || '').toLowerCase())
+          );
+          if (existing) {
+            setSelectedClientId(existing.id);
+            setClientTelephone(existing.telephone || '');
+          } else {
+            setSelectedClientId('new');
+          }
+          setScanError(
+            isArabic
+              ? 'تم الاستخراج محلياً — قد تكون بعض الحقول ناقصة، يرجى التحقق منها.'
+              : 'Extraction locale (OCR) — certains champs peuvent être incomplets, vérifiez-les.'
+          );
+          setCurrentStep(2);
+          return;
+        }
+      } catch {
+        // OCR local a aussi échoué
+      }
       setScanError(
         err?.message ||
           (isArabic
