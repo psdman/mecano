@@ -1,0 +1,6 @@
+{
+  "name": "MecaScan - Atelier Garagiste & Scanner Carte Grise",
+  "description": "Application d'aide aux garagistes et mécaniciens : scanner IA véhicule & carte grise, détection immatriculation et propriétaire, création compte client et affectation véhicule, saisie des pièces changées avec prix, suivi des soldes et encaissement des paiements.",
+  "requestFramePermissions": ["camera"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
