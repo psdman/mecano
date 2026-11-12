@@ -10,6 +10,7 @@ import { CaissePaiements } from './components/CaissePaiements';
 import { PaymentModal } from './components/PaymentModal';
 import { AdminPanel } from './components/AdminPanel';
 import { Login } from './components/Login';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { api, SessionUser } from './utils/api';
 
 const AppContent: React.FC = () => {
@@ -59,7 +60,9 @@ export default function App() {
   }
   return (
     <GarageProvider user={user}>
-      <AppContent />
+      <ErrorBoundary>
+        <AppContent />
+      </ErrorBoundary>
     </GarageProvider>
   );
 }
