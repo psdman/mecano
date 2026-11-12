@@ -4,7 +4,9 @@
  * tout en gardant le payload sous ~450 Ko (limites des APIs vision gratuites).
  * Gère la rotation EXIF (photos de smartphone) via createImageBitmap.
  */
-const MAX_PAYLOAD_CHARS = 450_000;
+// ~110 Ko max par image : BlockRun tronque au-delà de ~130 Ko de base64.
+// (Gemini tolère plus, mais on dimensionne pour le provider le plus restrictif.)
+const MAX_PAYLOAD_CHARS = 110_000;
 
 async function loadImage(dataUrl: string): Promise<ImageBitmap | HTMLImageElement> {
   // createImageBitmap applique l'orientation EXIF ('from-image') — crucial pour les photos smartphone
@@ -65,15 +67,15 @@ export async function compressImageForUpload(
   try {
     const src = await loadImage(dataUrl);
     try {
-      for (const size of [maxSize, 1000, 800]) {
-        for (const quality of [0.8, 0.65, 0.5]) {
+      for (const size of [1000, 850, 700]) {
+        for (const quality of [0.75, 0.6, 0.45]) {
           const out = canvasToJpeg(src, size, quality);
-          if (out.length <= MAX_PAYLOAD_CHARS || (size === 800 && quality === 0.5)) {
+          if (out.length <= MAX_PAYLOAD_CHARS || (size === 700 && quality === 0.45)) {
             return out;
           }
         }
       }
-      return canvasToJpeg(src, 800, 0.5);
+      return canvasToJpeg(src, 700, 0.45);
     } finally {
       if (src instanceof ImageBitmap) src.close();
     }
