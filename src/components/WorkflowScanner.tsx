@@ -149,7 +149,17 @@ export const WorkflowScanner: React.FC = () => {
         }),
       });
 
-      const resData = await response.json();
+      const rawText = await response.text();
+      let resData: any;
+      try {
+        resData = JSON.parse(rawText);
+      } catch {
+        throw new Error(
+          isArabic
+            ? 'خطأ في الخادم. تأكد أن الخادم يعمل ثم حاول مرة أخرى.'
+            : `Erreur serveur (HTTP ${response.status}). Vérifiez que le serveur est bien démarré.`
+        );
+      }
 
       if (resData.success && resData.data) {
         const d = resData.data;

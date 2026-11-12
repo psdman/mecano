@@ -19,6 +19,19 @@ const PORT = 3000;
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
+// Return JSON errors instead of Express' default HTML error pages
+// (Safari throws "The string did not match the expected pattern" on res.json() of HTML)
+app.use((err: any, _req: express.Request, res: express.Response, next: express.NextFunction) => {
+  if (res.headersSent) return next(err);
+  const status = err?.status || err?.statusCode || 500;
+  res.status(status).json({
+    success: false,
+    error: err?.type === 'entity.too.large'
+      ? 'Les images sont trop lourdes. Réessayez avec des photos moins volumineuses.'
+      : err?.message || 'Erreur interne du serveur.',
+  });
+});
+
 // Init Google GenAI if key present
 const geminiApiKey = process.env.GEMINI_API_KEY;
 let aiClient: GoogleGenAI | null = null;
@@ -366,6 +379,11 @@ app.post('/api/scan-vehicle-registration', async (req, res) => {
       error: error?.message || 'Erreur lors de l’analyse du document par le serveur.',
     });
   }
+});
+
+// JSON 404 for unknown API routes (avoid HTML responses breaking res.json())
+app.use('/api', (_req, res) => {
+  res.status(404).json({ success: false, error: 'Route API introuvable.' });
 });
 
 // Setup Vite in Dev or Serve Static in Prod
