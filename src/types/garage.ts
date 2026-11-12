@@ -28,6 +28,7 @@ export interface Vehicle {
   couleur?: string;
   photoVehiculeUrl?: string;
   photoCarteGriseUrl?: string;
+  photoCarteGriseVersoUrl?: string;
   notes?: string;
   createdAt: string;
 }

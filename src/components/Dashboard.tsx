@@ -1,6 +1,5 @@
 import React from 'react';
 import { useGarage } from '../context/GarageContext';
-import { SAMPLE_VEHICLE_IMG } from '../data/seedData';
 import {
   Wrench,
   Camera,
@@ -89,15 +88,6 @@ export const Dashboard: React.FC = () => {
               {t.checkBalances} ({clientsWithPendingBalance.length} {isArabic ? 'باقي كيتسالو' : 'crédits'})
             </button>
           </div>
-        </div>
-
-        {/* Moroccan car bay visual */}
-        <div className="hidden lg:block absolute right-6 top-1/2 -translate-y-1/2 w-80 h-48 rounded-xl overflow-hidden border border-slate-700/60 shadow-xl opacity-90">
-          <img
-            src={SAMPLE_VEHICLE_IMG}
-            alt="Garage Maroc"
-            className="w-full h-full object-cover"
-          />
         </div>
       </div>
 

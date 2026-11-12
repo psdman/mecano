@@ -36,7 +36,6 @@ interface GarageContextType {
   getInterventionsByClient: (clientId: string) => Intervention[];
   getInterventionsByVehicle: (vehicleId: string) => Intervention[];
   getPaymentsByClient: (clientId: string) => Payment[];
-  resetDemoData: () => void;
   formatDH: (amount: number) => string;
   preselectedClientIdForPayment: string | null;
   setPreselectedClientIdForPayment: (id: string | null) => void;
@@ -211,13 +210,6 @@ export const GarageProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const formatDH = (amount: number) => formatPrice(amount, isArabic);
 
-  const resetDemoData = () => {
-    setClients(INITIAL_CLIENTS);
-    setVehicles(INITIAL_VEHICLES);
-    setInterventions(INITIAL_INTERVENTIONS);
-    setPayments(INITIAL_PAYMENTS);
-  };
-
   return (
     <GarageContext.Provider
       value={{
@@ -247,7 +239,6 @@ export const GarageProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         getInterventionsByClient,
         getInterventionsByVehicle,
         getPaymentsByClient,
-        resetDemoData,
         formatDH,
         preselectedClientIdForPayment,
         setPreselectedClientIdForPayment,

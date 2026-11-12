@@ -2,14 +2,11 @@ import React, { useState } from 'react';
 import { useGarage } from '../context/GarageContext';
 import { CameraCaptureModal } from './CameraCaptureModal';
 import {
-  SAMPLE_VEHICLE_IMG,
-  SAMPLE_CARTE_GRISE_IMG,
-} from '../data/seedData';
-import {
   calculateInterventionTotals,
   formatMoroccanLicensePlate,
 } from '../utils/garageCalculations';
 import { COMMON_MOROCCAN_PARTS } from '../utils/translations';
+import { suggestCorrection } from '../utils/spellcheck';
 import { ReplacedPart, PaymentMethod } from '../types/garage';
 import {
   Camera,
@@ -27,6 +24,7 @@ import {
   ArrowRight,
   RefreshCw,
   MessageCircle,
+  SpellCheck,
 } from 'lucide-react';
 
 export const WorkflowScanner: React.FC = () => {
@@ -48,54 +46,38 @@ export const WorkflowScanner: React.FC = () => {
   // Photos
   const [vehiclePhoto, setVehiclePhoto] = useState<string | null>(null);
   const [carteGrisePhoto, setCarteGrisePhoto] = useState<string | null>(null);
+  const [carteGriseVersoPhoto, setCarteGriseVersoPhoto] = useState<string | null>(null);
 
   // Camera modal
   const [cameraModalOpen, setCameraModalOpen] = useState(false);
-  const [cameraTarget, setCameraTarget] = useState<'vehicle' | 'carteGrise'>('vehicle');
+  const [cameraTarget, setCameraTarget] = useState<'vehicle' | 'carteGrise' | 'carteGriseVerso'>('vehicle');
 
   // OCR state
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [scanError, setScanError] = useState<string | null>(null);
 
-  // Step 2 detected fields (Moroccan defaults)
-  const [detectedPlate, setDetectedPlate] = useState('54321 | أ | 6');
-  const [detectedNom, setDetectedNom] = useState('EL AMRANI');
-  const [detectedPrenom, setDetectedPrenom] = useState('Mohamed');
-  const [detectedAdresse, setDetectedAdresse] = useState('Quartier Maârif, Casablanca');
-  const [detectedMarque, setDetectedMarque] = useState('DACIA');
-  const [detectedModele, setDetectedModele] = useState('Logan 1.5 dCi');
-  const [detectedVin, setDetectedVin] = useState('UU14SDA8549120485');
-  const [detectedDateMec, setDetectedDateMec] = useState('14/05/2018');
-  const [detectedCarburant, setDetectedCarburant] = useState('Gasoil (ديازال)');
+  // Step 2 detected fields
+  const [detectedPlate, setDetectedPlate] = useState('');
+  const [detectedNom, setDetectedNom] = useState('');
+  const [detectedPrenom, setDetectedPrenom] = useState('');
+  const [detectedAdresse, setDetectedAdresse] = useState('');
+  const [detectedMarque, setDetectedMarque] = useState('');
+  const [detectedModele, setDetectedModele] = useState('');
+  const [detectedVin, setDetectedVin] = useState('');
+  const [detectedDateMec, setDetectedDateMec] = useState('');
+  const [detectedCarburant, setDetectedCarburant] = useState('');
 
   // Step 3 Client & Vehicle
   const [selectedClientId, setSelectedClientId] = useState<string>('new');
-  const [clientTelephone, setClientTelephone] = useState('06 61 23 45 67');
+  const [clientTelephone, setClientTelephone] = useState('');
   const [clientEmail, setClientEmail] = useState('');
-  const [vehicleKilometrage, setVehicleKilometrage] = useState<number>(168000);
+  const [vehicleKilometrage, setVehicleKilometrage] = useState<number>(0);
   const [vehicleNotes, setVehicleNotes] = useState('');
 
   // Step 4 Parts in Moroccan Dirhams (DH)
-  const [interventionMotif, setInterventionMotif] = useState('Vidange complète + Contrôle freinage avant');
-  const [interventionDiagnostic, setInterventionDiagnostic] = useState('Plaquettes avant à remplacer. Niveau huile bas.');
-  const [parts, setParts] = useState<ReplacedPart[]>([
-    {
-      id: 'part-tmp-1',
-      designation: isArabic ? 'فيدونج كامل زيت 5W30 مع فيلتر د الزيت' : 'Vidange complète Huile 5W30 + Filtre à huile',
-      reference: 'VID-5W30',
-      quantite: 1,
-      prixUnitaireHT: 380,
-      totalHT: 380,
-    },
-    {
-      id: 'part-tmp-2',
-      designation: isArabic ? 'بلاكيط د الفران القدام (Avant)' : 'Jeu plaquettes de frein avant',
-      reference: 'PLQ-AV',
-      quantite: 1,
-      prixUnitaireHT: 250,
-      totalHT: 250,
-    },
-  ]);
+  const [interventionMotif, setInterventionMotif] = useState('');
+  const [interventionDiagnostic, setInterventionDiagnostic] = useState('');
+  const [parts, setParts] = useState<ReplacedPart[]>([]);
   const [mainDOeuvreHeures, setMainDOeuvreHeures] = useState<number>(1.5);
   const [tauxHoraireHT, setTauxHoraireHT] = useState<number>(80);
   const [remiseHT, setRemiseHT] = useState<number>(30);
@@ -112,12 +94,7 @@ export const WorkflowScanner: React.FC = () => {
     interventionId: string;
   } | null>(null);
 
-  const loadDemoSample = () => {
-    setVehiclePhoto(SAMPLE_VEHICLE_IMG);
-    setCarteGrisePhoto(SAMPLE_CARTE_GRISE_IMG);
-  };
-
-  const openCamera = (target: 'vehicle' | 'carteGrise') => {
+  const openCamera = (target: 'vehicle' | 'carteGrise' | 'carteGriseVerso') => {
     setCameraTarget(target);
     setCameraModalOpen(true);
   };
@@ -125,12 +102,14 @@ export const WorkflowScanner: React.FC = () => {
   const handleCameraCapture = (base64Data: string) => {
     if (cameraTarget === 'vehicle') {
       setVehiclePhoto(base64Data);
+    } else if (cameraTarget === 'carteGriseVerso') {
+      setCarteGriseVersoPhoto(base64Data);
     } else {
       setCarteGrisePhoto(base64Data);
     }
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, target: 'vehicle' | 'carteGrise') => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, target: 'vehicle' | 'carteGrise' | 'carteGriseVerso') => {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
@@ -138,6 +117,8 @@ export const WorkflowScanner: React.FC = () => {
         if (reader.result) {
           if (target === 'vehicle') {
             setVehiclePhoto(reader.result as string);
+          } else if (target === 'carteGriseVerso') {
+            setCarteGriseVersoPhoto(reader.result as string);
           } else {
             setCarteGrisePhoto(reader.result as string);
           }
@@ -164,6 +145,7 @@ export const WorkflowScanner: React.FC = () => {
         body: JSON.stringify({
           vehicleImage: vehiclePhoto,
           carteGriseImage: carteGrisePhoto,
+          carteGriseVersoImage: carteGriseVersoPhoto,
         }),
       });
 
@@ -199,18 +181,13 @@ export const WorkflowScanner: React.FC = () => {
       } else {
         throw new Error(resData.error || 'Erreur détection');
       }
-    } catch {
-      // Clean Moroccan fallback
-      setDetectedPlate('54321 | أ | 6');
-      setDetectedNom('EL AMRANI');
-      setDetectedPrenom('Mohamed');
-      setDetectedAdresse('Quartier Maârif, Casablanca');
-      setDetectedMarque('DACIA');
-      setDetectedModele('Logan 1.5 dCi');
-      setDetectedVin('UU14SDA8549120485');
-      setDetectedDateMec('14/05/2018');
-      setDetectedCarburant('Gasoil (ديازال)');
-      setCurrentStep(2);
+    } catch (err: any) {
+      setScanError(
+        err?.message ||
+          (isArabic
+            ? 'فشل الكشف التلقائي. حاول مرة أخرى أو أدخل المعلومات يدويًا.'
+            : 'La détection automatique a échoué. Réessayez ou saisissez les informations manuellement.')
+      );
     } finally {
       setIsAnalyzing(false);
     }
@@ -284,9 +261,10 @@ export const WorkflowScanner: React.FC = () => {
       vin: detectedVin,
       dateMiseEnCirculation: detectedDateMec,
       carburant: detectedCarburant,
-      kilometrageActuel: vehicleKilometrage,
+      kilometrageActuel: vehicleKilometrage || undefined,
       photoVehiculeUrl: vehiclePhoto || undefined,
       photoCarteGriseUrl: carteGrisePhoto || undefined,
+      photoCarteGriseVersoUrl: carteGriseVersoPhoto || undefined,
       notes: vehicleNotes,
     });
 
@@ -374,7 +352,13 @@ export const WorkflowScanner: React.FC = () => {
         isOpen={cameraModalOpen}
         onClose={() => setCameraModalOpen(false)}
         onCapture={handleCameraCapture}
-        title={cameraTarget === 'vehicle' ? t.vehiclePhoto : t.carteGrisePhoto}
+        title={
+          cameraTarget === 'vehicle'
+            ? t.vehiclePhoto
+            : cameraTarget === 'carteGriseVerso'
+              ? `${t.carteGrisePhoto} — ${t.carteGriseVerso}`
+              : `${t.carteGrisePhoto} — ${t.carteGriseRecto}`
+        }
       />
 
       {/* ================= STEP 1: PHOTOS ================= */}
@@ -385,13 +369,6 @@ export const WorkflowScanner: React.FC = () => {
               <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">{t.step1Title}</h1>
               <p className="text-sm text-slate-600 mt-1">{t.step1Subtitle}</p>
             </div>
-            <button
-              onClick={loadDemoSample}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-amber-50 hover:bg-amber-100 border border-amber-300 text-amber-900 text-xs font-bold rounded-lg transition-colors cursor-pointer self-start sm:self-auto"
-            >
-              <Sparkles className="w-4 h-4 text-amber-600" />
-              <span>{t.loadDemo}</span>
-            </button>
           </div>
 
           {scanError && (
@@ -457,44 +434,55 @@ export const WorkflowScanner: React.FC = () => {
                   <FileText className="w-4 h-4 text-amber-500" />
                   <span>{t.carteGrisePhoto}</span>
                 </div>
-                {carteGrisePhoto && (
+                {(carteGrisePhoto || carteGriseVersoPhoto) && (
                   <span className="text-xs text-emerald-600 font-bold flex items-center gap-1">
                     <Check className="w-3.5 h-3.5" /> {t.ready}
                   </span>
                 )}
               </div>
 
-              <div className="p-4 flex-1 flex flex-col justify-center items-center bg-slate-50 min-h-[220px]">
-                {carteGrisePhoto ? (
-                  <div className="relative w-full h-52 rounded-lg overflow-hidden border border-slate-200">
-                    <img src={carteGrisePhoto} alt="Carte Grise" className="w-full h-full object-cover" />
-                    <button
-                      onClick={() => setCarteGrisePhoto(null)}
-                      className="absolute top-2 right-2 px-2 py-1 bg-slate-950/80 hover:bg-red-600 text-white rounded-md text-xs cursor-pointer"
-                    >
-                      {t.deletePhoto}
-                    </button>
-                  </div>
-                ) : (
-                  <div className="text-center p-4">
-                    <FileText className="w-12 h-12 text-slate-300 mx-auto mb-2" />
-                    <p className="text-xs text-slate-500 mb-4">{isArabic ? 'البطاقة الرمادية كاملة وواضحة' : 'Document officiel lisible'}</p>
-                    <div className="flex flex-wrap items-center justify-center gap-2">
-                      <button
-                        onClick={() => openCamera('carteGrise')}
-                        className="px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-lg cursor-pointer flex items-center gap-1.5"
-                      >
-                        <Camera className="w-4 h-4 text-amber-400" />
-                        <span>{t.takePhoto}</span>
-                      </button>
-                      <label className="px-3.5 py-2.5 bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 text-xs font-bold rounded-lg cursor-pointer flex items-center gap-1.5">
-                        <Upload className="w-4 h-4 text-slate-500" />
-                        <span>{t.upload}</span>
-                        <input type="file" accept="image/*" className="hidden" onChange={(e) => handleFileChange(e, 'carteGrise')} />
-                      </label>
+              <div className="p-4 flex-1 bg-slate-50 min-h-[240px]">
+                <div className="grid grid-cols-2 gap-3 h-full">
+                  {([
+                    { photo: carteGrisePhoto, label: t.carteGriseRecto, target: 'carteGrise' as const, clear: () => setCarteGrisePhoto(null) },
+                    { photo: carteGriseVersoPhoto, label: t.carteGriseVerso, target: 'carteGriseVerso' as const, clear: () => setCarteGriseVersoPhoto(null) },
+                  ]).map((side) => (
+                    <div key={side.target} className="flex flex-col gap-1.5">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 text-center">{side.label}</span>
+                      <div className="flex-1 flex flex-col justify-center items-center bg-white border border-slate-200 rounded-lg p-2.5 min-h-[190px]">
+                        {side.photo ? (
+                          <div className="relative w-full h-40 rounded-md overflow-hidden border border-slate-200">
+                            <img src={side.photo} alt={side.label} className="w-full h-full object-cover" />
+                            <button
+                              onClick={side.clear}
+                              className="absolute top-1.5 right-1.5 px-1.5 py-0.5 bg-slate-950/80 hover:bg-red-600 text-white rounded text-[10px] cursor-pointer"
+                            >
+                              {t.deletePhoto}
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="text-center p-2">
+                            <FileText className="w-8 h-8 text-slate-300 mx-auto mb-1.5" />
+                            <div className="flex flex-col items-center gap-1.5">
+                              <button
+                                onClick={() => openCamera(side.target)}
+                                className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white text-[11px] font-bold rounded-md cursor-pointer flex items-center gap-1"
+                              >
+                                <Camera className="w-3.5 h-3.5 text-amber-400" />
+                                <span>{t.takePhoto}</span>
+                              </button>
+                              <label className="px-2.5 py-1.5 bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 text-[11px] font-bold rounded-md cursor-pointer flex items-center gap-1">
+                                <Upload className="w-3.5 h-3.5 text-slate-500" />
+                                <span>{t.upload}</span>
+                                <input type="file" accept="image/*" className="hidden" onChange={(e) => handleFileChange(e, side.target)} />
+                              </label>
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  ))}
+                </div>
               </div>
             </div>
           </div>
@@ -838,6 +826,21 @@ export const WorkflowScanner: React.FC = () => {
                           placeholder="Nom de la pièce"
                           className="w-full px-2 py-1.5 border border-slate-200 rounded-md text-xs font-medium"
                         />
+                        {(() => {
+                          const suggestion = suggestCorrection(part.designation);
+                          if (!suggestion) return null;
+                          return (
+                            <button
+                              type="button"
+                              onClick={() => handleUpdatePart(part.id, { designation: suggestion.corrected })}
+                              title={suggestion.changes.map((c) => `${c.from} → ${c.to}`).join(', ')}
+                              className="mt-1 inline-flex items-center gap-1 px-1.5 py-0.5 bg-sky-50 hover:bg-sky-100 border border-sky-200 text-sky-800 text-[10px] font-semibold rounded cursor-pointer"
+                            >
+                              <SpellCheck className="w-3 h-3" />
+                              {isArabic ? `تصحيح: ${suggestion.corrected}` : `Corriger : ${suggestion.corrected}`}
+                            </button>
+                          );
+                        })()}
                       </td>
                       <td className="py-2 px-3 text-center">
                         <input

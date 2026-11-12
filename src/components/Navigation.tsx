@@ -1,9 +1,9 @@
 import React from 'react';
 import { useGarage } from '../context/GarageContext';
-import { Wrench, Plus, RotateCcw, Languages } from 'lucide-react';
+import { Wrench, Plus, Languages } from 'lucide-react';
 
 export const Navigation: React.FC = () => {
-  const { activeTab, setActiveTab, resetDemoData, language, setLanguage, t, isArabic } = useGarage();
+  const { activeTab, setActiveTab, language, setLanguage, t, isArabic } = useGarage();
 
   const toggleLanguage = () => {
     setLanguage(language === 'fr' ? 'ar' : 'fr');
@@ -105,15 +105,6 @@ export const Navigation: React.FC = () => {
             >
               <Languages className="w-3.5 h-3.5 text-amber-500" />
               <span>{isArabic ? 'Français' : 'العربية'}</span>
-            </button>
-
-            <button
-              onClick={resetDemoData}
-              title={t.demo}
-              className="hidden sm:flex items-center gap-1 px-2 py-1.5 text-xs text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-md transition-colors cursor-pointer"
-            >
-              <RotateCcw className="w-3.5 h-3.5" />
-              <span>{t.demo}</span>
             </button>
 
             <button
