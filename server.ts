@@ -115,53 +115,101 @@ function buildPromptText(): string {
 /**
  * Free no-key vision API (BlockRun / Nemotron) — OpenAI-compatible chat completions.
  */
-async function analyzeWithBlockRun(imageParts: { dataUrl: string }[]): Promise<any | null> {
+interface VisionProvider {
+  name: string;
+  url: string;
+  model: string;
+  apiKey?: string;
+}
+
+const VISION_PROVIDERS: VisionProvider[] = [
+  {
+    name: 'blockrun-nemotron',
+    url: 'https://blockrun.ai/api/v1/chat/completions',
+    model: 'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning',
+  },
+  {
+    name: 'llm7-vision',
+    url: 'https://api.llm7.io/v1/chat/completions',
+    model: 'default',
+  },
+];
+
+async function callVisionProvider(
+  provider: VisionProvider,
+  imageParts: { dataUrl: string }[]
+): Promise<any | null> {
   const content: any[] = [
     { type: 'text', text: `${SCAN_PROMPT}\n\n${SCAN_JSON_INSTRUCTION}` },
     ...imageParts.map((img) => ({ type: 'image_url', image_url: { url: img.dataUrl } })),
   ];
 
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (provider.apiKey) headers['Authorization'] = `Bearer ${provider.apiKey}`;
+
   const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-  let lastError: any = null;
-  // BlockRun free tier is rate-limited: retry with backoff on 429
-  for (let attempt = 0; attempt < 4; attempt++) {
-    try {
-      const response = await fetch('https://blockrun.ai/api/v1/chat/completions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model: 'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning',
-          messages: [{ role: 'user', content }],
-          temperature: 0.1,
-        }),
-      });
+  // Free tiers are rate-limited: retry with backoff on 429
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const response = await fetch(provider.url, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        model: provider.model,
+        messages: [{ role: 'user', content }],
+        temperature: 0.1,
+      }),
+    });
 
-      if (response.status === 429 && attempt < 3) {
-        const waitMs = 5000 * (attempt + 1);
-        console.warn(`BlockRun rate-limité (429), nouvelle tentative dans ${waitMs / 1000}s...`);
-        await sleep(waitMs);
-        continue;
-      }
+    if (response.status === 429 && attempt < 2) {
+      const waitMs = 4000 * (attempt + 1);
+      console.warn(`${provider.name} rate-limité (429), nouvelle tentative dans ${waitMs / 1000}s...`);
+      await sleep(waitMs);
+      continue;
+    }
 
-      if (!response.ok) {
-        throw new Error(`BlockRun HTTP ${response.status}`);
-      }
+    if (!response.ok) {
+      throw new Error(`${provider.name} HTTP ${response.status}`);
+    }
 
-      const json = await response.json();
-      const text: string = json?.choices?.[0]?.message?.content || '';
-      const cleaned = text.replace(/```json|```/g, '').trim();
-      const parsed = JSON.parse(cleaned);
-      return parsed && parsed.immatriculation ? parsed : null;
-    } catch (err: any) {
-      lastError = err;
-      if (attempt < 3) {
-        await sleep(2000 * (attempt + 1));
+    const json = await response.json();
+    const text: string = json?.choices?.[0]?.message?.content || '';
+    const cleaned = text.replace(/```json|```/g, '').trim();
+    const parsed = JSON.parse(cleaned);
+    if (parsed && typeof parsed === 'object') {
+      // Normalise : certains modèles renvoient des tableaux ou des non-chaînes
+      for (const key of Object.keys(parsed)) {
+        if (Array.isArray(parsed[key])) parsed[key] = parsed[key].join(' | ');
+        else if (parsed[key] !== null && typeof parsed[key] !== 'string') {
+          parsed[key] = String(parsed[key]);
+        }
       }
     }
+    return parsed && parsed.immatriculation ? parsed : null;
   }
+  return null;
+}
 
-  throw lastError || new Error('BlockRun: toutes les tentatives ont échoué');
+/**
+ * Essaie chaque provider de vision gratuit jusqu'à obtenir un résultat.
+ */
+async function analyzeWithFreeVisionApis(
+  imageParts: { dataUrl: string }[]
+): Promise<{ provider: string; data: any } | null> {
+  let lastError: any = null;
+  for (const provider of VISION_PROVIDERS) {
+    try {
+      const parsed = await callVisionProvider(provider, imageParts);
+      if (parsed) {
+        return { provider: provider.name, data: parsed };
+      }
+    } catch (err: any) {
+      lastError = err;
+      console.warn(`${provider.name} indisponible:`, err?.message);
+    }
+  }
+  if (lastError) throw lastError;
+  return null;
 }
 
 /**
@@ -293,18 +341,18 @@ app.post('/api/scan-vehicle-registration', async (req, res) => {
       }
     }
 
-    // Free no-key vision API fallback (BlockRun Nemotron)
+    // Free no-key vision APIs fallback (BlockRun, puis LLM7)
     try {
-      const parsedData = await analyzeWithBlockRun(imageParts);
-      if (parsedData) {
+      const result = await analyzeWithFreeVisionApis(imageParts);
+      if (result) {
         return res.json({
           success: true,
-          source: 'blockrun-nemotron',
-          data: parsedData,
+          source: result.provider,
+          data: result.data,
         });
       }
-    } catch (blockRunErr: any) {
-      console.warn('BlockRun API indisponible:', blockRunErr?.message);
+    } catch (visionErr: any) {
+      console.warn('APIs vision gratuites indisponibles:', visionErr?.message);
     }
 
     return res.status(502).json({
