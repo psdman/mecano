@@ -3,6 +3,7 @@ export interface SessionUser {
   username: string;
   role: 'admin' | 'mecanicien';
   nom?: string;
+  permissions?: Record<string, boolean>;
 }
 
 async function req(path: string, options: RequestInit = {}) {
@@ -21,7 +22,7 @@ export const api = {
   logout: () => req('/api/auth/logout', { method: 'POST' }),
   me: () => req('/api/auth/me'),
   listUsers: () => req('/api/users'),
-  createUser: (u: { username: string; password: string; role: string; nom?: string }) =>
+  createUser: (u: { username: string; password: string; role: string; nom?: string; permissions?: Record<string, boolean> }) =>
     req('/api/users', { method: 'POST', body: JSON.stringify(u) }),
   deleteUser: (id: string) => req(`/api/users/${id}`, { method: 'DELETE' }),
   changePassword: (oldPassword: string, newPassword: string) =>

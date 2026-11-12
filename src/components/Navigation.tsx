@@ -10,15 +10,17 @@ export const Navigation: React.FC = () => {
   const garageName = settings.garageNom || t.appName;
   const garageLogo = settings.garageLogo;
 
+  const can = (perm: string) => isAdmin || user?.permissions?.[perm] !== false;
+
   const tabs: TabDef[] = [
     { id: 'dashboard', label: t.dashboard, icon: <LayoutDashboard className="w-4 h-4" /> },
-    { id: 'workflow', label: t.workflow, icon: <ScanLine className="w-4 h-4" /> },
-    { id: 'interventions', label: t.interventions, icon: <ClipboardList className="w-4 h-4" /> },
-    { id: 'vehicles', label: t.vehicles, icon: <Car className="w-4 h-4" /> },
-    { id: 'clients', label: t.clients, icon: <Users className="w-4 h-4" /> },
-    { id: 'caisse', label: t.caisse, icon: <Wallet className="w-4 h-4" /> },
+    ...(can('workflow') ? [{ id: 'workflow', label: t.workflow, icon: <ScanLine className="w-4 h-4" /> }] : []),
+    ...(can('interventions') ? [{ id: 'interventions', label: t.interventions, icon: <ClipboardList className="w-4 h-4" /> }] : []),
+    ...(can('vehicles') ? [{ id: 'vehicles', label: t.vehicles, icon: <Car className="w-4 h-4" /> }] : []),
+    ...(can('clients') ? [{ id: 'clients', label: t.clients, icon: <Users className="w-4 h-4" /> }] : []),
+    ...(can('caisse') ? [{ id: 'caisse', label: t.caisse, icon: <Wallet className="w-4 h-4" /> }] : []),
     ...(isAdmin ? [{ id: 'admin', label: 'Admin', icon: <ShieldCheck className="w-4 h-4" /> }] : []),
-  ];
+  ].filter((tab) => can(tab.id));
 
   const itemCls = (id: string) =>
     `w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all cursor-pointer ${

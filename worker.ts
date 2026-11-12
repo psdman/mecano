@@ -217,7 +217,7 @@ async function getSessionUser(request: Request, env: Env): Promise<any | null> {
   const token = getCookie(request, SESSION_COOKIE);
   if (!token) return null;
   const row = await env.DB.prepare(
-    `SELECT u.id, u.username, u.role, u.nom FROM sessions s JOIN users u ON u.id = s.user_id
+    `SELECT u.id, u.username, u.role, u.nom, u.permissions FROM sessions s JOIN users u ON u.id = s.user_id
      WHERE s.token = ? AND s.expires_at > ?`
   ).bind(token, Date.now()).first();
   return row || null;
@@ -252,9 +252,13 @@ async function handleAuth(request: Request, env: Env, url: URL): Promise<Respons
     await env.DB.prepare('INSERT INTO sessions (token, user_id, expires_at) VALUES (?, ?, ?)')
       .bind(token, user.id, Date.now() + SESSION_TTL_MS).run();
 
+    const ALL_PERMS = { dashboard: true, workflow: true, interventions: true, vehicles: true, clients: true, caisse: true };
     const res = jsonResponse({
       success: true,
-      user: { id: user.id, username: user.username, role: user.role, nom: user.nom },
+      user: {
+        id: user.id, username: user.username, role: user.role, nom: user.nom,
+        permissions: user.permissions ? JSON.parse(user.permissions) : ALL_PERMS,
+      },
     });
     res.headers.append('Set-Cookie',
       `${SESSION_COOKIE}=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${SESSION_TTL_MS / 1000}${url.protocol === 'https:' ? '; Secure' : ''}`);
@@ -312,18 +316,19 @@ async function handleUsers(request: Request, env: Env, url: URL): Promise<Respon
   if (me.role !== 'admin') return jsonResponse({ success: false, error: 'Accès réservé aux administrateurs.' }, 403);
 
   if (url.pathname === '/api/users' && request.method === 'GET') {
-    const { results } = await env.DB.prepare('SELECT id, username, role, nom, created_at FROM users').all();
+    const { results } = await env.DB.prepare('SELECT id, username, role, nom, permissions, created_at FROM users').all();
     return jsonResponse({ success: true, users: results });
   }
 
   if (url.pathname === '/api/users' && request.method === 'POST') {
-    const { username, password, role, nom } = await request.json().catch(() => ({}));
+    const { username, password, role, nom, permissions } = await request.json().catch(() => ({}));
     if (!username || !password) return jsonResponse({ success: false, error: 'username et password requis.' }, 400);
     const salt = uuid();
     const hash = await hashPassword(password, salt);
+    const perms = permissions && typeof permissions === 'object' ? JSON.stringify(permissions) : null;
     try {
-      await env.DB.prepare('INSERT INTO users (id, username, password_hash, salt, role, nom) VALUES (?, ?, ?, ?, ?, ?)')
-        .bind(uuid(), username, hash, salt, role === 'admin' ? 'admin' : 'mecanicien', nom || '').run();
+      await env.DB.prepare('INSERT INTO users (id, username, password_hash, salt, role, nom, permissions) VALUES (?, ?, ?, ?, ?, ?, ?)')
+        .bind(uuid(), username, hash, salt, role === 'admin' ? 'admin' : 'mecanicien', nom || '', perms).run();
     } catch {
       return jsonResponse({ success: false, error: 'Ce nom d’utilisateur existe déjà.' }, 409);
     }

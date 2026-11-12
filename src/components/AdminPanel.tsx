@@ -11,6 +11,13 @@ export const AdminPanel: React.FC = () => {
   const [users, setUsers] = useState<UserRow[]>([]);
   const [msg, setMsg] = useState('');
   const [newUser, setNewUser] = useState({ username: '', password: '', role: 'mecanicien', nom: '' });
+  const [newPerms, setNewPerms] = useState<Record<string, boolean>>({
+    workflow: true, interventions: true, vehicles: true, clients: true, caisse: true,
+  });
+  const PERM_LABELS: Record<string, string> = {
+    workflow: 'Scanner / Réparations', interventions: 'Interventions', vehicles: 'Véhicules',
+    clients: 'Clients', caisse: 'Caisse / Paiements',
+  };
   const [pwd, setPwd] = useState({ old: '', next: '', confirm: '' });
   const [local, setLocal] = useState<Record<string, string>>({});
 
@@ -22,7 +29,7 @@ export const AdminPanel: React.FC = () => {
   useEffect(() => { setLocal(settings); }, [settings]);
 
   const createUser = async () => {
-    const r = await api.createUser(newUser);
+    const r = await api.createUser({ ...newUser, permissions: newPerms });
     setMsg(r.success ? 'Utilisateur créé.' : (r.error || 'Erreur'));
     if (r.success) { setNewUser({ username: '', password: '', role: 'mecanicien', nom: '' }); load(); }
   };
@@ -93,6 +100,19 @@ export const AdminPanel: React.FC = () => {
               <option value="mecanicien">Mécanicien</option>
               <option value="admin">Admin</option>
             </select>
+          </div>
+          <div>
+            <label className="block text-[11px] font-bold text-slate-600 mb-1.5">Modules autorisés</label>
+            <div className="grid grid-cols-2 gap-1.5">
+              {Object.entries(PERM_LABELS).map(([key, label]) => (
+                <label key={key} className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-700 cursor-pointer">
+                  <input type="checkbox" checked={newPerms[key] !== false}
+                    onChange={(e) => setNewPerms({ ...newPerms, [key]: e.target.checked })}
+                    className="rounded-xs" />
+                  {label}
+                </label>
+              ))}
+            </div>
           </div>
           <button onClick={createUser} className="w-full py-2 bg-slate-900 text-white text-xs font-bold rounded-lg hover:bg-slate-800 cursor-pointer">Créer l'utilisateur</button>
         </div>
