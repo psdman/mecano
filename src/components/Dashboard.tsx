@@ -1,5 +1,6 @@
 import React from 'react';
 import { useGarage } from '../context/GarageContext';
+import { LicensePlate } from './LicensePlate';
 import {
   Wrench,
   Camera,
@@ -201,9 +202,7 @@ export const Dashboard: React.FC = () => {
                       <div className="flex items-start justify-between gap-3">
                         <div>
                           <div className="flex items-center gap-2">
-                            <span className="px-2 py-0.5 bg-slate-100 font-mono font-bold text-xs text-slate-900 rounded-sm">
-                              {vehicle?.immatriculation || '-'}
-                            </span>
+                            <LicensePlate value={vehicle?.immatriculation} className="px-2 py-0.5 bg-slate-100 font-mono font-bold text-xs text-slate-900 rounded-sm" />
                             <span className="font-bold text-slate-800 text-xs">
                               {vehicle?.marque} {vehicle?.modele}
                             </span>

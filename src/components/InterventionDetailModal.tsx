@@ -1,6 +1,7 @@
 import React from 'react';
 import { Intervention } from '../types/garage';
 import { useGarage } from '../context/GarageContext';
+import { LicensePlate } from './LicensePlate';
 import { X, Printer, Wrench, CheckCircle, MessageCircle } from 'lucide-react';
 
 interface InterventionDetailModalProps {
@@ -123,7 +124,7 @@ export const InterventionDetailModal: React.FC<InterventionDetailModalProps> = (
             </div>
             <div>
               <span className="text-slate-400 block text-[10px] font-sans">{isArabic ? 'الماتريكول' : 'VÉHICULE & MATRICULE'}</span>
-              <span className="font-bold text-slate-900">{vehicle?.immatriculation || '-'}</span>
+              <LicensePlate value={vehicle?.immatriculation} className="font-bold text-slate-900" />
               <span className="text-slate-500 text-[10px] block font-sans">
                 {vehicle ? `${vehicle.marque} ${vehicle.modele}` : ''}
               </span>

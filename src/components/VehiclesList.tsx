@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useGarage } from '../context/GarageContext';
+import { LicensePlate } from './LicensePlate';
 import {
   Car,
   Search,
@@ -104,8 +105,7 @@ export const VehiclesList: React.FC = () => {
 
                     {/* Moroccan license plate sticker */}
                     <div className="absolute bottom-2 left-2 bg-white/95 backdrop-blur-xs text-slate-900 font-mono font-extrabold text-xs px-2.5 py-1 rounded-sm shadow-sm border border-slate-300">
-                      <span className="text-amber-600 mr-1.5 font-sans">🇲🇦</span>
-                      {vehicle.immatriculation}
+                      <LicensePlate value={vehicle.immatriculation} className="bg-white/95 backdrop-blur-xs px-2.5 py-1 rounded-sm border border-slate-300" />
                     </div>
 
                     {vehicle.carburant && (

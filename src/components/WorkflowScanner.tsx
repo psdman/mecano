@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useGarage } from '../context/GarageContext';
 import { CameraCaptureModal } from './CameraCaptureModal';
+import { LicensePlate } from './LicensePlate';
 import {
   calculateInterventionTotals,
   formatMoroccanLicensePlate,
@@ -590,7 +591,7 @@ export const WorkflowScanner: React.FC = () => {
               {/* Authentic Moroccan Plate Styling */}
               <div className="flex items-center border-2 border-slate-700 bg-white text-slate-950 rounded-md overflow-hidden font-mono text-xl sm:text-2xl font-extrabold tracking-wider shadow-inner px-4 py-1.5">
                 <span className="text-amber-600 mr-2 font-sans text-xs">🇲🇦</span>
-                <span className="font-mono">{detectedPlate}</span>
+                <LicensePlate value={detectedPlate} className="font-mono" />
               </div>
               <div>
                 <div className="text-xs text-slate-400">{isArabic ? 'السيارة المكتشفة' : 'Véhicule détecté'}</div>
@@ -1107,7 +1108,7 @@ export const WorkflowScanner: React.FC = () => {
           <div className="p-4 bg-slate-50 border border-slate-200 rounded-lg text-left text-xs space-y-2 font-mono">
             <div className="flex justify-between">
               <span className="text-slate-500">الماتريكول / Matricule :</span>
-              <span className="font-bold text-slate-900">{detectedPlate}</span>
+              <LicensePlate value={detectedPlate} className="font-bold text-slate-900" />
             </div>
             <div className="flex justify-between">
               <span className="text-slate-500">الزبون / Client :</span>

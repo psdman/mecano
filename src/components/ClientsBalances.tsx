@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useGarage } from '../context/GarageContext';
+import { LicensePlate } from './LicensePlate';
 import { Client } from '../types/garage';
 import {
   Search,
@@ -263,7 +264,7 @@ export const ClientsBalances: React.FC = () => {
                               className="inline-flex items-center gap-1 px-2 py-0.5 bg-slate-100 rounded-sm text-xs font-mono font-bold text-slate-800 mr-1"
                             >
                               <Car className="w-3 h-3 text-slate-500" />
-                              <span>{v.immatriculation}</span>
+                              <LicensePlate value={v.immatriculation} className="font-mono font-bold" />
                               <span className="font-sans font-normal text-slate-500 text-[10px]">
                                 ({v.marque} {v.modele})
                               </span>

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useGarage } from '../context/GarageContext';
 import { InterventionDetailModal } from './InterventionDetailModal';
+import { LicensePlate } from './LicensePlate';
 import { Intervention, InterventionStatus } from '../types/garage';
 import {
   Search,
@@ -139,9 +140,7 @@ export const InterventionsList: React.FC = () => {
                       </td>
 
                       <td className="py-3.5 px-4">
-                        <div className="font-mono font-bold text-slate-900 bg-slate-100 px-2 py-0.5 rounded-sm inline-block">
-                          {vehicle?.immatriculation || '-'}
-                        </div>
+                        <LicensePlate value={vehicle?.immatriculation} className="font-mono font-bold text-slate-900 bg-slate-100 px-2 py-0.5 rounded-sm inline-block" />
                         <div className="text-[11px] text-slate-500 mt-0.5">
                           {vehicle ? `${vehicle.marque} ${vehicle.modele}` : ''}
                         </div>
