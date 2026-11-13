@@ -386,9 +386,12 @@ export const WorkflowScanner: React.FC = () => {
   const openWhatsAppShare = () => {
     const phoneClean = clientTelephone.replace(/[^0-9]/g, '');
     const phoneFormatted = phoneClean.startsWith('0') ? `212${phoneClean.slice(1)}` : phoneClean;
+    const clientName = clients.find((c) => c.id === createdRecords?.clientId)?.nomComplet
+      || `${detectedPrenom} ${detectedNom}`.trim() || 'Client';
+    const firstName = clientName.split(' ')[0] || 'Client';
     const message = isArabic
-      ? `السلام عليكم سي ${detectedPrenom}، طوموبيل ديالك (${detectedPlate}) تم تسجيلها في الكراج. مجموع الإصلاح: ${formatDH(totals.totalTTC)}. شكراً لك!`
-      : `Bonjour M. ${detectedPrenom}, votre véhicule (${detectedPlate}) est bien pris en charge à notre atelier. Total réparation: ${formatDH(totals.totalTTC)}. Merci pour votre confiance !`;
+      ? `السلام عليكم سي ${firstName}، طوموبيل ديالك (${detectedPlate}) تم تسجيلها في الكراج. مجموع الإصلاح: ${formatDH(totals.totalTTC)}. شكراً لك!`
+      : `Bonjour M. ${firstName}, votre véhicule (${detectedPlate}) est bien pris en charge à notre atelier. Total réparation: ${formatDH(totals.totalTTC)}. Merci pour votre confiance !`;
 
     window.open(`https://wa.me/${phoneFormatted}?text=${encodeURIComponent(message)}`, '_blank');
   };

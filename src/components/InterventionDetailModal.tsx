@@ -1,8 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Intervention } from '../types/garage';
 import { useGarage } from '../context/GarageContext';
 import { LicensePlate } from './LicensePlate';
-import { X, Printer, Wrench, CheckCircle, MessageCircle } from 'lucide-react';
+import { X, Printer, Wrench, CheckCircle, MessageCircle, Pencil } from 'lucide-react';
 
 interface InterventionDetailModalProps {
   intervention: Intervention | null;
@@ -15,10 +15,32 @@ export const InterventionDetailModal: React.FC<InterventionDetailModalProps> = (
 }) => {
   const { getClientById, getVehicleById, updateIntervention, formatDH, isArabic, t, settings } = useGarage();
 
+  const [editing, setEditing] = useState(false);
+  const [editForm, setEditForm] = useState({ motif: '', diagnostic: '', kilometrage: 0, statut: 'en_cours' as Intervention['statut'] });
+
   if (!intervention) return null;
 
   const client = getClientById(intervention.clientId);
   const vehicle = getVehicleById(intervention.vehiculeId);
+
+  const startEdit = () => {
+    setEditForm({
+      motif: intervention.motif,
+      diagnostic: intervention.diagnostic || '',
+      kilometrage: intervention.kilometrage || 0,
+      statut: intervention.statut,
+    });
+    setEditing(true);
+  };
+  const saveEdit = () => {
+    updateIntervention(intervention.id, {
+      motif: editForm.motif,
+      diagnostic: editForm.diagnostic || undefined,
+      kilometrage: editForm.kilometrage || undefined,
+      statut: editForm.statut,
+    });
+    setEditing(false);
+  };
 
   const handleMarkAsFacture = () => {
     updateIntervention(intervention.id, { statut: 'facture', dateFin: new Date().toISOString().split('T')[0] });
@@ -54,6 +76,13 @@ export const InterventionDetailModal: React.FC<InterventionDetailModalProps> = (
           </div>
 
           <div className="flex items-center gap-2">
+            <button
+              onClick={editing ? saveEdit : startEdit}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold rounded-md cursor-pointer"
+            >
+              <Pencil className="w-3.5 h-3.5" />
+              <span>{editing ? (isArabic ? 'حفظ' : 'Enregistrer') : (isArabic ? 'تعديل' : 'Modifier')}</span>
+            </button>
             {client?.telephone && (
               <button
                 onClick={sendWhatsAppInvoice}
@@ -157,6 +186,35 @@ export const InterventionDetailModal: React.FC<InterventionDetailModalProps> = (
             </div>
           </div>
 
+          {editing ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+              <div className="sm:col-span-2">
+                <label className="block font-bold text-slate-700 mb-1">{isArabic ? 'الخدمة المطلوبة' : 'Motif'}</label>
+                <input value={editForm.motif} onChange={(e) => setEditForm({ ...editForm, motif: e.target.value })}
+                  className="w-full px-2.5 py-1.5 border border-slate-300 rounded-md" />
+              </div>
+              <div className="sm:col-span-2">
+                <label className="block font-bold text-slate-700 mb-1">{isArabic ? 'التشخيص' : 'Diagnostic'}</label>
+                <input value={editForm.diagnostic} onChange={(e) => setEditForm({ ...editForm, diagnostic: e.target.value })}
+                  className="w-full px-2.5 py-1.5 border border-slate-300 rounded-md" />
+              </div>
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">{isArabic ? 'العداد (km)' : 'Kilométrage'}</label>
+                <input type="number" value={editForm.kilometrage} onChange={(e) => setEditForm({ ...editForm, kilometrage: Number(e.target.value) })}
+                  className="w-full px-2.5 py-1.5 border border-slate-300 rounded-md font-mono" />
+              </div>
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">{isArabic ? 'الحالة' : 'Statut'}</label>
+                <select value={editForm.statut} onChange={(e) => setEditForm({ ...editForm, statut: e.target.value as Intervention['statut'] })}
+                  className="w-full px-2.5 py-1.5 border border-slate-300 rounded-md">
+                  <option value="en_cours">{isArabic ? 'قيد الإصلاح' : 'En cours'}</option>
+                  <option value="termine">{isArabic ? 'منتهي' : 'Terminé'}</option>
+                  <option value="facture">{isArabic ? 'تمت الفوترة' : 'Facturé'}</option>
+                  <option value="annule">{isArabic ? 'ملغى' : 'Annulé'}</option>
+                </select>
+              </div>
+            </div>
+          ) : (
           <div className="text-xs space-y-1">
             <div>
               <span className="font-bold text-slate-700">{isArabic ? 'الخدمة المطلوبة : ' : 'Motif : '}</span>
@@ -169,6 +227,7 @@ export const InterventionDetailModal: React.FC<InterventionDetailModalProps> = (
               </div>
             )}
           </div>
+          )}
 
           {/* Parts Table */}
           <div className="border border-slate-200 rounded-lg overflow-hidden">
