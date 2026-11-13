@@ -24,6 +24,8 @@ export const api = {
   listUsers: () => req('/api/users'),
   createUser: (u: { username: string; password: string; role: string; nom?: string; permissions?: Record<string, boolean> }) =>
     req('/api/users', { method: 'POST', body: JSON.stringify(u) }),
+  updateUser: (id: string, u: { permissions?: Record<string, boolean>; role?: string; nom?: string; password?: string }) =>
+    req(`/api/users/${id}`, { method: 'PUT', body: JSON.stringify(u) }),
   deleteUser: (id: string) => req(`/api/users/${id}`, { method: 'DELETE' }),
   changePassword: (oldPassword: string, newPassword: string) =>
     req('/api/auth/change-password', { method: 'POST', body: JSON.stringify({ oldPassword, newPassword }) }),

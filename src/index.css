@@ -25,4 +25,27 @@
   .print-only {
     display: block !important;
   }
+
+  /* N'afficher que la zone imprimable (facture) */
+  body * {
+    visibility: hidden;
+  }
+  .print-area,
+  .print-area * {
+    visibility: visible;
+  }
+  .print-area {
+    position: absolute !important;
+    inset: 0 !important;
+    width: 100% !important;
+    max-height: none !important;
+    overflow: visible !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+  .print-area .print-pad {
+    padding: 10mm !important;
+  }
 }

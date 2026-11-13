@@ -335,6 +335,29 @@ async function handleUsers(request: Request, env: Env, url: URL): Promise<Respon
     return jsonResponse({ success: true });
   }
 
+  const editMatch = url.pathname.match(/^\/api\/users\/([^/]+)$/);
+  if (editMatch && request.method === 'PUT') {
+    if (editMatch[1] === me.id && (await request.clone().json().catch(() => ({})))?.role === 'mecanicien') {
+      return jsonResponse({ success: false, error: 'Vous ne pouvez pas rétrograder votre propre compte.' }, 400);
+    }
+    const { permissions, role, nom, password } = await request.json().catch(() => ({}));
+    if (password) {
+      const salt = uuid();
+      const hash = await hashPassword(password, salt);
+      await env.DB.prepare('UPDATE users SET password_hash = ?, salt = ? WHERE id = ?').bind(hash, salt, editMatch[1]).run();
+    }
+    if (role) {
+      await env.DB.prepare('UPDATE users SET role = ? WHERE id = ?').bind(role === 'admin' ? 'admin' : 'mecanicien', editMatch[1]).run();
+    }
+    if (typeof nom === 'string') {
+      await env.DB.prepare('UPDATE users SET nom = ? WHERE id = ?').bind(nom, editMatch[1]).run();
+    }
+    if (permissions && typeof permissions === 'object') {
+      await env.DB.prepare('UPDATE users SET permissions = ? WHERE id = ?').bind(JSON.stringify(permissions), editMatch[1]).run();
+    }
+    return jsonResponse({ success: true });
+  }
+
   const delMatch = url.pathname.match(/^\/api\/users\/([^/]+)$/);
   if (delMatch && request.method === 'DELETE') {
     if (delMatch[1] === me.id) return jsonResponse({ success: false, error: 'Vous ne pouvez pas supprimer votre propre compte.' }, 400);

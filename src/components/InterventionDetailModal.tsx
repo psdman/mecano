@@ -13,7 +13,7 @@ export const InterventionDetailModal: React.FC<InterventionDetailModalProps> = (
   intervention,
   onClose,
 }) => {
-  const { getClientById, getVehicleById, updateIntervention, formatDH, isArabic, t } = useGarage();
+  const { getClientById, getVehicleById, updateIntervention, formatDH, isArabic, t, settings } = useGarage();
 
   if (!intervention) return null;
 
@@ -86,19 +86,30 @@ export const InterventionDetailModal: React.FC<InterventionDetailModalProps> = (
         </div>
 
         {/* Printable Document */}
-        <div className="p-8 space-y-6 text-slate-900 bg-white">
+        <div className="print-area p-8 space-y-6 text-slate-900 bg-white">
+          <div className="print-pad">
           <div className="flex flex-col sm:flex-row justify-between gap-6 pb-6 border-b border-slate-200">
             <div>
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-md bg-amber-500 text-slate-950 flex items-center justify-center font-bold">
-                  <Wrench className="w-4 h-4" />
+                {settings.garageLogo ? (
+                  <img src={settings.garageLogo} alt="logo" className="w-10 h-10 object-contain" />
+                ) : (
+                  <div className="w-10 h-10 rounded-md bg-slate-900 text-white flex items-center justify-center font-bold">
+                    <Wrench className="w-5 h-5" />
+                  </div>
+                )}
+                <div>
+                  <span className="text-lg font-extrabold tracking-tight block">{settings.garageNom || t.garageTitle}</span>
+                  <span className="text-[10px] text-slate-500">{t.generalMech}</span>
                 </div>
-                <span className="text-lg font-extrabold tracking-tight">{t.garageTitle}</span>
               </div>
-              <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                {t.generalMech}
-                <br />
-                {t.cityCountry} · Tél: +212 5 22 00 11 22 / WhatsApp: +212 6 61 00 11 22
+              <p className="text-xs text-slate-500 mt-1.5 leading-relaxed">
+                {settings.garageAdresse && <>{settings.garageAdresse}<br /></>}
+                {settings.garageTelephone && <>Tél : {settings.garageTelephone}</>}
+                {settings.garageEmail && <> · {settings.garageEmail}</>}
+                {!settings.garageAdresse && !settings.garageTelephone && !settings.garageEmail && (
+                  <>{t.cityCountry} · Tél: +212 5 22 00 11 22 / WhatsApp: +212 6 61 00 11 22</>
+                )}
               </p>
             </div>
 
@@ -226,6 +237,7 @@ export const InterventionDetailModal: React.FC<InterventionDetailModalProps> = (
                 {isArabic ? 'موافق على الإصلاح' : 'Bon pour accord'}
               </div>
             </div>
+          </div>
           </div>
         </div>
       </div>

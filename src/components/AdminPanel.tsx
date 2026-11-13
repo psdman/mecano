@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useGarage } from '../context/GarageContext';
 import { api } from '../utils/api';
-import { ShieldCheck, UserPlus, Trash2, KeyRound, Save, Settings2, Building2, Upload } from 'lucide-react';
+import { ShieldCheck, UserPlus, Trash2, KeyRound, Save, Settings2, Building2, Upload, Pencil } from 'lucide-react';
 import { compressImageForUpload } from '../utils/imageCompress';
 
-interface UserRow { id: string; username: string; role: string; nom?: string; created_at: string }
+interface UserRow { id: string; username: string; role: string; nom?: string; permissions?: string | null; created_at: string }
 
 export const AdminPanel: React.FC = () => {
   const { settings, saveSettings, user } = useGarage();
@@ -33,6 +33,24 @@ export const AdminPanel: React.FC = () => {
     setMsg(r.success ? 'Utilisateur créé.' : (r.error || 'Erreur'));
     if (r.success) { setNewUser({ username: '', password: '', role: 'mecanicien', nom: '' }); load(); }
   };
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editPerms, setEditPerms] = useState<Record<string, boolean>>({});
+  const [editRole, setEditRole] = useState('mecanicien');
+
+  const startEdit = (u: UserRow) => {
+    setEditingId(u.id);
+    setEditRole(u.role);
+    setEditPerms({
+      workflow: true, interventions: true, vehicles: true, clients: true, caisse: true,
+      ...(u.permissions ? JSON.parse(u.permissions) : {}),
+    });
+  };
+  const saveEdit = async (id: string) => {
+    const r = await api.updateUser(id, { permissions: editPerms, role: editRole });
+    setMsg(r.success ? 'Droits mis à jour.' : (r.error || 'Erreur'));
+    if (r.success) { setEditingId(null); load(); }
+  };
+
   const delUser = async (id: string) => {
     const r = await api.deleteUser(id);
     setMsg(r.success ? 'Utilisateur supprimé.' : (r.error || 'Erreur'));
@@ -76,14 +94,42 @@ export const AdminPanel: React.FC = () => {
           <h2 className="text-sm font-extrabold text-slate-900 flex items-center gap-2"><UserPlus className="w-4 h-4 text-amber-500" /> Utilisateurs</h2>
           <div className="space-y-2">
             {users.map((u) => (
-              <div key={u.id} className="flex items-center justify-between text-xs bg-slate-50 rounded-lg px-3 py-2">
-                <div>
-                  <span className="font-bold text-slate-900">{u.username}</span>
-                  {u.nom && <span className="text-slate-500"> — {u.nom}</span>}
-                  <span className={`ml-2 px-1.5 py-0.5 rounded text-[10px] font-bold ${u.role === 'admin' ? 'bg-amber-100 text-amber-800' : 'bg-slate-200 text-slate-600'}`}>{u.role}</span>
+              <div key={u.id} className="bg-slate-50 rounded-lg px-3 py-2">
+                <div className="flex items-center justify-between text-xs">
+                  <div>
+                    <span className="font-bold text-slate-900">{u.username}</span>
+                    {u.nom && <span className="text-slate-500"> — {u.nom}</span>}
+                    <span className={`ml-2 px-1.5 py-0.5 rounded text-[10px] font-bold ${u.role === 'admin' ? 'bg-amber-100 text-amber-800' : 'bg-slate-200 text-slate-600'}`}>{u.role}</span>
+                  </div>
+                  {u.id !== user?.id && (
+                    <div className="flex items-center gap-1">
+                      <button onClick={() => editingId === u.id ? setEditingId(null) : startEdit(u)}
+                        className="p-1.5 text-slate-500 hover:bg-slate-200 rounded cursor-pointer" title="Modifier les droits">
+                        <Pencil className="w-3.5 h-3.5" />
+                      </button>
+                      <button onClick={() => delUser(u.id)} className="p-1.5 text-red-500 hover:bg-red-50 rounded cursor-pointer"><Trash2 className="w-3.5 h-3.5" /></button>
+                    </div>
+                  )}
                 </div>
-                {u.id !== user?.id && (
-                  <button onClick={() => delUser(u.id)} className="p-1.5 text-red-500 hover:bg-red-50 rounded cursor-pointer"><Trash2 className="w-3.5 h-3.5" /></button>
+                {editingId === u.id && (
+                  <div className="mt-2 pt-2 border-t border-slate-200 space-y-2">
+                    <select value={editRole} onChange={(e) => setEditRole(e.target.value)}
+                      className="px-2 py-1 border border-slate-300 rounded text-xs">
+                      <option value="mecanicien">Mécanicien</option>
+                      <option value="admin">Admin</option>
+                    </select>
+                    <div className="grid grid-cols-2 gap-1">
+                      {Object.entries(PERM_LABELS).map(([key, label]) => (
+                        <label key={key} className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-700 cursor-pointer">
+                          <input type="checkbox" checked={editPerms[key] !== false}
+                            onChange={(e) => setEditPerms({ ...editPerms, [key]: e.target.checked })} className="rounded-xs" />
+                          {label}
+                        </label>
+                      ))}
+                    </div>
+                    <button onClick={() => saveEdit(u.id)}
+                      className="px-3 py-1 bg-slate-900 text-white text-[11px] font-bold rounded cursor-pointer">Enregistrer</button>
+                  </div>
                 )}
               </div>
             ))}
