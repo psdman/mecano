@@ -35,4 +35,8 @@ export const api = {
   getCollection: (coll: string) => req(`/api/data/${coll}`),
   replaceCollection: (coll: string, items: any[]) =>
     req(`/api/data/${coll}/replace`, { method: 'PUT', body: JSON.stringify(items) }),
+  upsertRecord: (coll: string, item: any) =>
+    req(`/api/data/${coll}`, { method: 'POST', body: JSON.stringify(item) }),
+  deleteRecord: (coll: string, id: string) =>
+    req(`/api/data/${coll}/${id}`, { method: 'DELETE' }),
 };

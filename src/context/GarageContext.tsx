@@ -154,23 +154,19 @@ export const GarageProvider: React.FC<{ children: React.ReactNode; user?: Sessio
   // Sync localStorage + base D1
   useEffect(() => {
     localStorage.setItem(`${STORAGE_KEY}_clients`, JSON.stringify(clients));
-    if (hydrated) api.replaceCollection('clients', clients).catch(() => {});
-  }, [clients, hydrated]);
+  }, [clients]);
 
   useEffect(() => {
     localStorage.setItem(`${STORAGE_KEY}_vehicles`, JSON.stringify(vehicles));
-    if (hydrated) api.replaceCollection('vehicles', vehicles).catch(() => {});
-  }, [vehicles, hydrated]);
+  }, [vehicles]);
 
   useEffect(() => {
     localStorage.setItem(`${STORAGE_KEY}_interventions`, JSON.stringify(interventions));
-    if (hydrated) api.replaceCollection('interventions', interventions).catch(() => {});
-  }, [interventions, hydrated]);
+  }, [interventions]);
 
   useEffect(() => {
     localStorage.setItem(`${STORAGE_KEY}_payments`, JSON.stringify(payments));
-    if (hydrated) api.replaceCollection('payments', payments).catch(() => {});
-  }, [payments, hydrated]);
+  }, [payments]);
 
   const addClient = (clientData: Omit<Client, 'id' | 'createdAt'>): Client => {
     const newClient: Client = {
@@ -179,18 +175,28 @@ export const GarageProvider: React.FC<{ children: React.ReactNode; user?: Sessio
       createdAt: new Date().toISOString(),
     };
     setClients((prev) => [newClient, ...prev]);
+    api.upsertRecord('clients', newClient).catch(() => {});
     return newClient;
   };
 
   const updateClient = (id: string, updates: Partial<Client>) => {
+    const merged = { ...clients.find((c) => c.id === id), ...updates } as Client;
     setClients((prev) => prev.map((c) => (c.id === id ? { ...c, ...updates } : c)));
+    api.upsertRecord('clients', merged).catch(() => {});
   };
 
   const deleteClient = (id: string) => {
+    const clientVehicles = vehicles.filter((v) => v.clientId === id);
+    const clientInterventions = interventions.filter((i) => i.clientId === id);
+    const clientPayments = payments.filter((p) => p.clientId === id);
     setClients((prev) => prev.filter((c) => c.id !== id));
     setVehicles((prev) => prev.filter((v) => v.clientId !== id));
     setInterventions((prev) => prev.filter((i) => i.clientId !== id));
     setPayments((prev) => prev.filter((p) => p.clientId !== id));
+    api.deleteRecord('clients', id).catch(() => {});
+    clientVehicles.forEach((v) => api.deleteRecord('vehicles', v.id).catch(() => {}));
+    clientInterventions.forEach((i) => api.deleteRecord('interventions', i.id).catch(() => {}));
+    clientPayments.forEach((p) => api.deleteRecord('payments', p.id).catch(() => {}));
   };
 
   const addVehicle = (vehicleData: Omit<Vehicle, 'id' | 'createdAt'>): Vehicle => {
@@ -200,16 +206,22 @@ export const GarageProvider: React.FC<{ children: React.ReactNode; user?: Sessio
       createdAt: new Date().toISOString(),
     };
     setVehicles((prev) => [newVehicle, ...prev]);
+    api.upsertRecord('vehicles', newVehicle).catch(() => {});
     return newVehicle;
   };
 
   const updateVehicle = (id: string, updates: Partial<Vehicle>) => {
+    const merged = { ...vehicles.find((v) => v.id === id), ...updates } as Vehicle;
     setVehicles((prev) => prev.map((v) => (v.id === id ? { ...v, ...updates } : v)));
+    api.upsertRecord('vehicles', merged).catch(() => {});
   };
 
   const deleteVehicle = (id: string) => {
+    const vehicleInterventions = interventions.filter((i) => i.vehiculeId === id);
     setVehicles((prev) => prev.filter((v) => v.id !== id));
     setInterventions((prev) => prev.filter((i) => i.vehiculeId !== id));
+    api.deleteRecord('vehicles', id).catch(() => {});
+    vehicleInterventions.forEach((i) => api.deleteRecord('interventions', i.id).catch(() => {}));
   };
 
   const addIntervention = (data: Omit<Intervention, 'id' | 'createdAt'>): Intervention => {
@@ -222,6 +234,7 @@ export const GarageProvider: React.FC<{ children: React.ReactNode; user?: Sessio
       createdAt: new Date().toISOString(),
     };
     setInterventions((prev) => [newIntervention, ...prev]);
+    api.upsertRecord('interventions', newIntervention).catch(() => {});
 
     if (data.kilometrage) {
       updateVehicle(data.vehiculeId, { kilometrageActuel: data.kilometrage });
@@ -231,11 +244,14 @@ export const GarageProvider: React.FC<{ children: React.ReactNode; user?: Sessio
   };
 
   const updateIntervention = (id: string, updates: Partial<Intervention>) => {
+    const merged = { ...interventions.find((i) => i.id === id), ...updates } as Intervention;
     setInterventions((prev) => prev.map((i) => (i.id === id ? { ...i, ...updates } : i)));
+    api.upsertRecord('interventions', merged).catch(() => {});
   };
 
   const deleteIntervention = (id: string) => {
     setInterventions((prev) => prev.filter((i) => i.id !== id));
+    api.deleteRecord('interventions', id).catch(() => {});
   };
 
   const addPayment = (paymentData: Omit<Payment, 'id' | 'createdAt'>): Payment => {
@@ -248,15 +264,19 @@ export const GarageProvider: React.FC<{ children: React.ReactNode; user?: Sessio
       createdAt: new Date().toISOString(),
     };
     setPayments((prev) => [newPayment, ...prev]);
+    api.upsertRecord('payments', newPayment).catch(() => {});
     return newPayment;
   };
 
   const updatePayment = (id: string, updates: Partial<Payment>) => {
+    const merged = { ...payments.find((p) => p.id === id), ...updates } as Payment;
     setPayments((prev) => prev.map((p) => (p.id === id ? { ...p, ...updates } : p)));
+    api.upsertRecord('payments', merged).catch(() => {});
   };
 
   const deletePayment = (id: string) => {
     setPayments((prev) => prev.filter((p) => p.id !== id));
+    api.deleteRecord('payments', id).catch(() => {});
   };
 
   const getClientBalance = (clientId: string): ClientBalance => {
