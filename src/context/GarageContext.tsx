@@ -269,8 +269,9 @@ export const GarageProvider: React.FC<{ children: React.ReactNode; user?: Sessio
         merged.mainDOeuvreHeures || 0,
         merged.tauxHoraireHT || 0,
         merged.remiseHT || 0,
-        merged.tauxTva || 0
+        0 // TVA désactivée : taux forcé à 0 même pour les anciennes interventions
       );
+      merged.tauxTva = 0;
       Object.assign(merged, totals);
     }
 
