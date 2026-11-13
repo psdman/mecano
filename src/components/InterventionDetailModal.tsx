@@ -309,8 +309,8 @@ export const InterventionDetailModal: React.FC<InterventionDetailModalProps> = (
                 ))}
                 <tr className="bg-slate-50/50">
                   <td className="py-2 px-3 text-slate-800 font-bold">{t.totalLabor}</td>
-                  <td className="py-2 px-3 text-center font-mono text-slate-400">—</td>
-                  <td className="py-2 px-3 text-right font-mono text-slate-400">—</td>
+                  <td className="py-2 px-3 text-center font-mono text-slate-400">1</td>
+                  <td className="py-2 px-3 text-right font-mono">{formatDH(intervention.totalMainDOeuvreHT)}</td>
                   <td className="py-2 px-3 text-right font-mono font-bold text-slate-900">
                     {formatDH(intervention.totalMainDOeuvreHT)}
                   </td>
