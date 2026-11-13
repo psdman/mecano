@@ -34,6 +34,8 @@ interface GarageContextType {
   updateIntervention: (id: string, updates: Partial<Intervention>) => void;
   deleteIntervention: (id: string) => void;
   addPayment: (payment: Omit<Payment, 'id' | 'createdAt'>) => Payment;
+  updatePayment: (id: string, updates: Partial<Payment>) => void;
+  deletePayment: (id: string) => void;
   getClientBalance: (clientId: string) => ClientBalance;
   getClientById: (clientId: string) => Client | undefined;
   getVehicleById: (vehicleId: string) => Vehicle | undefined;
@@ -235,6 +237,14 @@ export const GarageProvider: React.FC<{ children: React.ReactNode; user?: Sessio
     return newPayment;
   };
 
+  const updatePayment = (id: string, updates: Partial<Payment>) => {
+    setPayments((prev) => prev.map((p) => (p.id === id ? { ...p, ...updates } : p)));
+  };
+
+  const deletePayment = (id: string) => {
+    setPayments((prev) => prev.filter((p) => p.id !== id));
+  };
+
   const getClientBalance = (clientId: string): ClientBalance => {
     return calculateClientBalance(clientId, interventions, payments);
   };
@@ -274,6 +284,8 @@ export const GarageProvider: React.FC<{ children: React.ReactNode; user?: Sessio
         updateIntervention,
         deleteIntervention,
         addPayment,
+        updatePayment,
+        deletePayment,
         getClientBalance,
         getClientById,
         getVehicleById,

@@ -48,8 +48,7 @@ export const WorkflowScanner: React.FC = () => {
   // Applique les réglages admin (taux horaire, remise, TVA, acompte) quand ils sont chargés
   useEffect(() => {
     const n = (k: string) => settings[k] !== undefined ? Number(settings[k]) : NaN;
-    if (!isNaN(n('tauxHoraireHT'))) setTauxHoraireHT(n('tauxHoraireHT'));
-    if (!isNaN(n('mainDOeuvreHeures'))) setMainDOeuvreHeures(n('mainDOeuvreHeures'));
+    if (!isNaN(n('mainDOeuvreMontant'))) setMainDOeuvreMontant(n('mainDOeuvreMontant'));
     if (!isNaN(n('remiseHT'))) setRemiseHT(n('remiseHT'));
     if (!isNaN(n('tauxTva'))) setTauxTva(n('tauxTva'));
     if (!isNaN(n('depositAmount'))) setDepositAmount(n('depositAmount'));
@@ -93,8 +92,7 @@ export const WorkflowScanner: React.FC = () => {
   const [interventionMotif, setInterventionMotif] = useState('');
   const [interventionDiagnostic, setInterventionDiagnostic] = useState('');
   const [parts, setParts] = useState<ReplacedPart[]>([]);
-  const [mainDOeuvreHeures, setMainDOeuvreHeures] = useState<number>(1.5);
-  const [tauxHoraireHT, setTauxHoraireHT] = useState<number>(80);
+  const [mainDOeuvreMontant, setMainDOeuvreMontant] = useState<number>(120);
   const [remiseHT, setRemiseHT] = useState<number>(30);
   const [tauxTva, setTauxTva] = useState<number>(20);
 
@@ -305,8 +303,8 @@ export const WorkflowScanner: React.FC = () => {
   // Totals
   const totals = calculateInterventionTotals(
     parts.map((p) => ({ quantite: p.quantite, prixUnitaireHT: p.prixUnitaireHT })),
-    mainDOeuvreHeures,
-    tauxHoraireHT,
+    1,               // 1 "heure" factice : le montant MO est saisi directement
+    mainDOeuvreMontant,
     remiseHT,
     tauxTva
   );
@@ -352,8 +350,8 @@ export const WorkflowScanner: React.FC = () => {
       diagnostic: interventionDiagnostic,
       kilometrage: vehicleKilometrage,
       pieces: parts.filter((p) => p.designation.trim() !== ''),
-      mainDOeuvreHeures,
-      tauxHoraireHT,
+      mainDOeuvreHeures: mainDOeuvreMontant,
+      tauxHoraireHT: 1,
       totalPiecesHT: totals.totalPiecesHT,
       totalMainDOeuvreHT: totals.totalMainDOeuvreHT,
       remiseHT: totals.remiseHT,
@@ -967,29 +965,16 @@ export const WorkflowScanner: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-xs space-y-4">
               <h3 className="text-xs font-bold uppercase text-slate-900">{t.laborTitle}</h3>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">{t.laborHours}</label>
-                  <input
-                    type="number"
-                    step="0.5"
-                    min="0"
-                    value={mainDOeuvreHeures}
-                    onChange={(e) => setMainDOeuvreHeures(Number(e.target.value))}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs font-mono font-bold"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">{t.hourlyRate}</label>
-                  <input
-                    type="number"
-                    step="10"
-                    min="0"
-                    value={tauxHoraireHT}
-                    onChange={(e) => setTauxHoraireHT(Number(e.target.value))}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs font-mono font-bold"
-                  />
-                </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">{isArabic ? 'أجرة يد المعلم (درهم)' : 'Main d\'œuvre totale (DH)'}</label>
+                <input
+                  type="number"
+                  min="0"
+                  step="10"
+                  value={mainDOeuvreMontant}
+                  onChange={(e) => setMainDOeuvreMontant(Number(e.target.value))}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs font-mono font-bold"
+                />
               </div>
 
               <div>
@@ -1066,7 +1051,7 @@ export const WorkflowScanner: React.FC = () => {
                     <span className="font-mono">{formatDH(totals.totalPiecesHT)}</span>
                   </div>
                   <div className="flex justify-between py-1 border-b border-slate-800">
-                    <span className="text-slate-400">{t.totalLabor} ({mainDOeuvreHeures}h)</span>
+                    <span className="text-slate-400">{t.totalLabor}</span>
                     <span className="font-mono">{formatDH(totals.totalMainDOeuvreHT)}</span>
                   </div>
                   {totals.remiseHT > 0 && (

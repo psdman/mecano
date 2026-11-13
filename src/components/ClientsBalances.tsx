@@ -14,6 +14,7 @@ import {
   Printer,
   X,
   MessageCircle,
+  Pencil,
 } from 'lucide-react';
 
 export const ClientsBalances: React.FC = () => {
@@ -23,6 +24,7 @@ export const ClientsBalances: React.FC = () => {
     interventions,
     payments,
     getClientBalance,
+    updateClient,
     setIsPaymentModalOpen,
     setPreselectedClientIdForPayment,
     t,
@@ -33,6 +35,18 @@ export const ClientsBalances: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'settled' | 'credit'>('all');
   const [selectedClientForStatement, setSelectedClientForStatement] = useState<Client | null>(null);
+  const [editingClient, setEditingClient] = useState<Client | null>(null);
+  const [editForm, setEditForm] = useState({ nom: '', prenom: '', nomComplet: '', telephone: '', email: '', adresse: '' });
+
+  const openEditClient = (c: Client) => {
+    setEditingClient(c);
+    setEditForm({ nom: c.nom, prenom: c.prenom || '', nomComplet: c.nomComplet, telephone: c.telephone, email: c.email || '', adresse: c.adresse || '' });
+  };
+  const saveEditClient = () => {
+    if (!editingClient) return;
+    updateClient(editingClient.id, { ...editForm, email: editForm.email || undefined, adresse: editForm.adresse || undefined });
+    setEditingClient(null);
+  };
 
   const [isNewClientModalOpen, setIsNewClientModalOpen] = useState(false);
   const [newNom, setNewNom] = useState('');
@@ -298,6 +312,13 @@ export const ClientsBalances: React.FC = () => {
                             <CreditCard className="w-3.5 h-3.5" />
                             <span>{t.collectBtn}</span>
                           </button>
+                          <button
+                            onClick={() => openEditClient(client)}
+                            className="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg cursor-pointer"
+                            title={isArabic ? 'تعديل' : 'Modifier'}
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </button>
                           {balance.soldeDu > 0 && (
                             <button
                               onClick={() => openWhatsAppForClient(client, balance.soldeDu)}
@@ -485,6 +506,54 @@ export const ClientsBalances: React.FC = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal édition client */}
+      {editingClient && (
+        <div className="fixed inset-0 z-50 bg-slate-950/60 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-extrabold text-slate-900">{isArabic ? 'تعديل الزبون' : 'Modifier le client'}</h3>
+              <button onClick={() => setEditingClient(null)} className="p-1 text-slate-400 hover:text-slate-700 cursor-pointer"><X className="w-5 h-5" /></button>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-[11px] font-bold text-slate-600 mb-1">{isArabic ? 'اللقب' : 'Nom'}</label>
+                <input value={editForm.nom} onChange={(e) => setEditForm({ ...editForm, nom: e.target.value })}
+                  className="w-full px-2.5 py-1.5 border border-slate-300 rounded-md text-xs" />
+              </div>
+              <div>
+                <label className="block text-[11px] font-bold text-slate-600 mb-1">{isArabic ? 'الاسم' : 'Prénom'}</label>
+                <input value={editForm.prenom} onChange={(e) => setEditForm({ ...editForm, prenom: e.target.value })}
+                  className="w-full px-2.5 py-1.5 border border-slate-300 rounded-md text-xs" />
+              </div>
+              <div>
+                <label className="block text-[11px] font-bold text-slate-600 mb-1">{isArabic ? 'الاسم الكامل' : 'Nom complet'}</label>
+                <input value={editForm.nomComplet} onChange={(e) => setEditForm({ ...editForm, nomComplet: e.target.value })}
+                  className="w-full px-2.5 py-1.5 border border-slate-300 rounded-md text-xs" />
+              </div>
+              <div>
+                <label className="block text-[11px] font-bold text-slate-600 mb-1">{isArabic ? 'الهاتف' : 'Téléphone'}</label>
+                <input value={editForm.telephone} onChange={(e) => setEditForm({ ...editForm, telephone: e.target.value })}
+                  className="w-full px-2.5 py-1.5 border border-slate-300 rounded-md text-xs" />
+              </div>
+              <div>
+                <label className="block text-[11px] font-bold text-slate-600 mb-1">Email</label>
+                <input value={editForm.email} onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                  className="w-full px-2.5 py-1.5 border border-slate-300 rounded-md text-xs" />
+              </div>
+              <div>
+                <label className="block text-[11px] font-bold text-slate-600 mb-1">{isArabic ? 'العنوان' : 'Adresse'}</label>
+                <input value={editForm.adresse} onChange={(e) => setEditForm({ ...editForm, adresse: e.target.value })}
+                  className="w-full px-2.5 py-1.5 border border-slate-300 rounded-md text-xs" />
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 pt-1">
+              <button onClick={() => setEditingClient(null)} className="px-4 py-2 border border-slate-300 text-xs font-bold rounded-lg cursor-pointer">{isArabic ? 'إلغاء' : 'Annuler'}</button>
+              <button onClick={saveEditClient} className="px-4 py-2 bg-slate-900 text-white text-xs font-bold rounded-lg cursor-pointer">{isArabic ? 'حفظ' : 'Enregistrer'}</button>
+            </div>
           </div>
         </div>
       )}

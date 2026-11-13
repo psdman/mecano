@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useGarage } from '../context/GarageContext';
-import { PaymentMethod } from '../types/garage';
+import { Payment, PaymentMethod } from '../types/garage';
 import {
   Banknote,
   CreditCard,
@@ -8,12 +8,27 @@ import {
   Landmark,
   Plus,
   Search,
+  Pencil,
+  Trash2,
+  X,
 } from 'lucide-react';
 
 export const CaissePaiements: React.FC = () => {
-  const { payments, getClientById, setIsPaymentModalOpen, formatDH, isArabic, t } = useGarage();
+  const { payments, getClientById, setIsPaymentModalOpen, updatePayment, deletePayment, formatDH, isArabic, t } = useGarage();
   const [filterMode, setFilterMode] = useState<'all' | PaymentMethod>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [editing, setEditing] = useState<Payment | null>(null);
+  const [editForm, setEditForm] = useState({ montant: 0, mode: 'especes' as PaymentMethod, date: '', reference: '', notes: '' });
+
+  const openEdit = (p: Payment) => {
+    setEditing(p);
+    setEditForm({ montant: p.montant, mode: p.mode, date: p.date, reference: p.reference || '', notes: p.notes || '' });
+  };
+  const saveEdit = () => {
+    if (!editing) return;
+    updatePayment(editing.id, { ...editForm, montant: Number(editForm.montant) });
+    setEditing(null);
+  };
 
   const filteredPayments = payments.filter((p) => {
     if (filterMode !== 'all' && p.mode !== filterMode) return false;
@@ -187,12 +202,13 @@ export const CaissePaiements: React.FC = () => {
                 <th className="py-3 px-4">{t.paymentMethod}</th>
                 <th className="py-3 px-4">{isArabic ? 'مرجع / ملاحظات' : 'Réf / Observations'}</th>
                 <th className="py-3 px-4 text-right">{isArabic ? 'المبلغ المقبوض' : 'Montant Encaissé'}</th>
+                <th className="py-3 px-4 text-center">{isArabic ? 'إجراءات' : 'Actions'}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 font-medium">
               {filteredPayments.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="py-8 text-center text-slate-400">
+                  <td colSpan={7} className="py-8 text-center text-slate-400">
                     {isArabic ? 'لا توجد مداخيل مسجلة' : 'Aucun paiement trouvé.'}
                   </td>
                 </tr>
@@ -223,6 +239,17 @@ export const CaissePaiements: React.FC = () => {
                       <td className="py-3.5 px-4 text-right font-mono font-bold text-emerald-600 text-sm">
                         {formatDH(payment.montant)}
                       </td>
+                      <td className="py-3.5 px-4">
+                        <div className="flex items-center justify-center gap-1">
+                          <button onClick={() => openEdit(payment)} className="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded cursor-pointer" title="Modifier">
+                            <Pencil className="w-3.5 h-3.5" />
+                          </button>
+                          <button onClick={() => { if (confirm(isArabic ? 'حذف هذا الدفع؟' : 'Supprimer ce paiement ?')) deletePayment(payment.id); }}
+                            className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded cursor-pointer" title="Supprimer">
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </td>
                     </tr>
                   );
                 })
@@ -231,6 +258,54 @@ export const CaissePaiements: React.FC = () => {
           </table>
         </div>
       </div>
+
+      {/* Modal édition paiement */}
+      {editing && (
+        <div className="fixed inset-0 z-50 bg-slate-950/60 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-extrabold text-slate-900">{isArabic ? 'تعديل الدفع' : 'Modifier le paiement'} — {editing.numeroRecu}</h3>
+              <button onClick={() => setEditing(null)} className="p-1 text-slate-400 hover:text-slate-700 cursor-pointer"><X className="w-5 h-5" /></button>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-[11px] font-bold text-slate-600 mb-1">{isArabic ? 'المبلغ (درهم)' : 'Montant (DH)'}</label>
+                <input type="number" value={editForm.montant} onChange={(e) => setEditForm({ ...editForm, montant: Number(e.target.value) })}
+                  className="w-full px-2.5 py-1.5 border border-slate-300 rounded-md text-xs font-mono" />
+              </div>
+              <div>
+                <label className="block text-[11px] font-bold text-slate-600 mb-1">{t.paymentMethod}</label>
+                <select value={editForm.mode} onChange={(e) => setEditForm({ ...editForm, mode: e.target.value as PaymentMethod })}
+                  className="w-full px-2.5 py-1.5 border border-slate-300 rounded-md text-xs">
+                  <option value="especes">{t.cash}</option>
+                  <option value="cheque">{t.check}</option>
+                  <option value="virement">{t.transfer}</option>
+                  <option value="carte">{t.card}</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-[11px] font-bold text-slate-600 mb-1">{isArabic ? 'التاريخ' : 'Date'}</label>
+                <input type="date" value={editForm.date} onChange={(e) => setEditForm({ ...editForm, date: e.target.value })}
+                  className="w-full px-2.5 py-1.5 border border-slate-300 rounded-md text-xs" />
+              </div>
+              <div>
+                <label className="block text-[11px] font-bold text-slate-600 mb-1">{isArabic ? 'مرجع' : 'Référence'}</label>
+                <input value={editForm.reference} onChange={(e) => setEditForm({ ...editForm, reference: e.target.value })}
+                  className="w-full px-2.5 py-1.5 border border-slate-300 rounded-md text-xs" />
+              </div>
+            </div>
+            <div>
+              <label className="block text-[11px] font-bold text-slate-600 mb-1">{isArabic ? 'ملاحظات' : 'Notes'}</label>
+              <input value={editForm.notes} onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })}
+                className="w-full px-2.5 py-1.5 border border-slate-300 rounded-md text-xs" />
+            </div>
+            <div className="flex justify-end gap-2 pt-1">
+              <button onClick={() => setEditing(null)} className="px-4 py-2 border border-slate-300 text-xs font-bold rounded-lg cursor-pointer">{isArabic ? 'إلغاء' : 'Annuler'}</button>
+              <button onClick={saveEdit} className="px-4 py-2 bg-slate-900 text-white text-xs font-bold rounded-lg cursor-pointer">{isArabic ? 'حفظ' : 'Enregistrer'}</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -168,8 +168,7 @@ export const AdminPanel: React.FC = () => {
           <h2 className="text-sm font-extrabold text-slate-900 flex items-center gap-2"><Settings2 className="w-4 h-4 text-amber-500" /> Réglages de l'atelier</h2>
           <div className="grid grid-cols-2 gap-3">
             {[
-              ['tauxHoraireHT', 'Taux horaire main d\'œuvre (DH/h)'],
-              ['mainDOeuvreHeures', 'Heures MO par défaut'],
+              ['mainDOeuvreMontant', 'Main d\'œuvre par défaut (DH)'],
               ['remiseHT', 'Remise par défaut (DH)'],
               ['tauxTva', 'TVA par défaut (%)'],
               ['depositAmount', 'Acompte par défaut (DH)'],

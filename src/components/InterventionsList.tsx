@@ -8,6 +8,7 @@ import {
   Plus,
   Calendar,
   Eye,
+  Trash2,
 } from 'lucide-react';
 
 export const InterventionsList: React.FC = () => {
@@ -15,6 +16,7 @@ export const InterventionsList: React.FC = () => {
     interventions,
     getClientById,
     getVehicleById,
+    deleteIntervention,
     setActiveTab,
     formatDH,
     isArabic,
@@ -162,7 +164,7 @@ export const InterventionsList: React.FC = () => {
                         <div className="text-[11px] text-slate-400 mt-0.5">
                           <span>{intervention.pieces.length} {isArabic ? 'قطع مبدلة' : 'pièce(s)'}</span>
                           <span className="mx-1">·</span>
-                          <span>{intervention.mainDOeuvreHeures}h {isArabic ? 'يد المعلم' : 'MO'}</span>
+                          <span>{formatDH(intervention.totalMainDOeuvreHT)} {isArabic ? 'يد المعلم' : 'MO'}</span>
                         </div>
                       </td>
 
@@ -193,6 +195,13 @@ export const InterventionsList: React.FC = () => {
                         >
                           <Eye className="w-3.5 h-3.5" />
                           <span>{isArabic ? 'معاينة' : 'Fiche'}</span>
+                        </button>
+                        <button
+                          onClick={() => { if (confirm(isArabic ? 'حذف أمر الإصلاح؟' : 'Supprimer cette intervention ?')) deleteIntervention(intervention.id); }}
+                          className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg cursor-pointer"
+                          title={isArabic ? 'حذف' : 'Supprimer'}
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       </td>
                     </tr>
