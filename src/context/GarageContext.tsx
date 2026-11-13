@@ -140,7 +140,15 @@ export const GarageProvider: React.FC<{ children: React.ReactNode; user?: Sessio
         ];
         await Promise.all(collections.map(async ([coll, set]) => {
           const res = await api.getCollection(coll);
-          if (alive && res.success && Array.isArray(res.items)) set(res.items);
+          // Fusionne serveur + local : les enregistrements créés hors-ligne
+          // (absents du serveur) sont conservés au lieu d'être écrasés.
+          if (alive && res.success && Array.isArray(res.items)) {
+            set((prev: any[]) => {
+              const serverIds = new Set(res.items.map((i: any) => i.id));
+              const localOnly = prev.filter((i: any) => i.id && !serverIds.has(i.id));
+              return [...res.items, ...localOnly];
+            });
+          }
         }));
         // Charge aussi les réglages admin
         const sRes = await api.getSettings();

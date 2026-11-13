@@ -79,9 +79,17 @@ main > * {
   .print-area * {
     visibility: visible;
   }
+  /* Débloquer le conteneur plein écran pour que tout le document s'imprime */
+  .fixed.inset-0,
+  .fixed.inset-0 > div {
+    position: static !important;
+    overflow: visible !important;
+    max-height: none !important;
+    height: auto !important;
+  }
   .print-area {
-    position: absolute !important;
-    inset: 0 !important;
+    position: static !important;
+    inset: auto !important;
     width: 100% !important;
     max-height: none !important;
     overflow: visible !important;

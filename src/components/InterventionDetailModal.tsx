@@ -79,9 +79,10 @@ export const InterventionDetailModal: React.FC<InterventionDetailModalProps> = (
     if (!client) return;
     const phoneClean = client.telephone.replace(/[^0-9]/g, '');
     const phoneFormatted = phoneClean.startsWith('0') ? `212${phoneClean.slice(1)}` : phoneClean;
+    const ownerName = [client?.prenom, client?.nom].filter(Boolean).join(' ') || client?.nomComplet || 'Client';
     const message = isArabic
-      ? `السلام عليكم سي ${client.prenom || client.nom}، تفاصيل إصلاح سيارتكم ${vehicle?.immatriculation || ''} : ${intervention.motif}. المجموع الإجمالي الصافي: ${formatDH(intervention.totalTTC)}. كراج ميكانيك السيارات.`
-      : `Bonjour M. ${client.nomComplet}, facture d’intervention pour votre véhicule ${vehicle?.immatriculation || ''} : ${intervention.motif}. Total à régler : ${formatDH(intervention.totalTTC)}. Garage Mécanique.`;
+      ? `السلام عليكم سي ${ownerName}، تفاصيل إصلاح سيارتكم ${vehicle?.immatriculation || ''} : ${intervention.motif}. المجموع الإجمالي الصافي: ${formatDH(intervention.totalTTC)}. كراج ميكانيك السيارات.`
+      : `Bonjour ${ownerName}, facture d'intervention pour votre véhicule ${vehicle?.immatriculation || ''} : ${intervention.motif}. Total à régler : ${formatDH(intervention.totalTTC)}. Garage Mécanique.`;
 
     window.open(`https://wa.me/${phoneFormatted}?text=${encodeURIComponent(message)}`, '_blank');
   };
@@ -100,7 +101,7 @@ export const InterventionDetailModal: React.FC<InterventionDetailModalProps> = (
             </span>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
             <button
               onClick={editing ? saveEdit : startEdit}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold rounded-md cursor-pointer"

@@ -387,13 +387,14 @@ export const WorkflowScanner: React.FC = () => {
   const openWhatsAppShare = () => {
     const phoneClean = clientTelephone.replace(/[^0-9]/g, '');
     const phoneFormatted = phoneClean.startsWith('0') ? `212${phoneClean.slice(1)}` : phoneClean;
-    const clientName = clients.find((c) => c.id === createdRecords?.clientId)?.nomComplet
+    const clientRec = clients.find((c) => c.id === createdRecords?.clientId);
+    const clientName = [clientRec?.prenom, clientRec?.nom].filter(Boolean).join(' ')
+      || clientRec?.nomComplet
       || `${detectedPrenom} ${detectedNom}`.trim() || 'Client';
-    const firstName = clientName.split(' ')[0] || 'Client';
     const plateDisplay = vehicles.find((v) => v.id === createdRecords?.vehicleId)?.immatriculation || detectedPlate;
     const message = isArabic
-      ? `السلام عليكم سي ${firstName}، طوموبيل ديالك (${plateDisplay}) تم تسجيلها في الكراج. مجموع الإصلاح: ${formatDH(totals.totalTTC)}. شكراً لك!`
-      : `Bonjour M. ${firstName}, votre véhicule (${plateDisplay}) est bien pris en charge à notre atelier. Total réparation: ${formatDH(totals.totalTTC)}. Merci pour votre confiance !`;
+      ? `السلام عليكم سي ${clientName}، طوموبيل ديالك (${plateDisplay}) تم تسجيلها في الكراج. مجموع الإصلاح: ${formatDH(totals.totalTTC)}. شكراً لك!`
+      : `Bonjour ${clientName}, votre véhicule (${plateDisplay}) est bien pris en charge à notre atelier. Total réparation: ${formatDH(totals.totalTTC)}. Merci pour votre confiance !`;
 
     window.open(`https://wa.me/${phoneFormatted}?text=${encodeURIComponent(message)}`, '_blank');
   };
