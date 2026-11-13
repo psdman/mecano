@@ -90,28 +90,39 @@ export const Navigation: React.FC = () => {
         </div>
       </aside>
 
-      {/* ===== Barre mobile (bas d'écran) ===== */}
-      <nav className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-slate-950/95 backdrop-blur border-t border-slate-800 no-print">
-        <div className="flex items-center justify-around px-1 py-1.5 overflow-x-auto">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
-              className={`flex flex-col items-center gap-0.5 px-2 py-1 rounded-lg min-w-[52px] cursor-pointer ${
-                activeTab === tab.id ? 'text-amber-400' : 'text-slate-500'
-              }`}
-            >
-              {tab.icon}
-              <span className="text-[9px] font-bold truncate max-w-[52px]">{tab.label}</span>
-            </button>
-          ))}
-          <button
-            onClick={() => setLanguage(language === 'fr' ? 'ar' : 'fr')}
-            className="flex flex-col items-center gap-0.5 px-2 py-1 text-slate-500 cursor-pointer"
-          >
-            <Languages className="w-4 h-4" />
-            <span className="text-[9px] font-bold">{language === 'fr' ? 'ع' : 'FR'}</span>
+      {/* ===== Barre mobile (haut d'écran) ===== */}
+      <nav className="lg:hidden sticky top-0 z-40 bg-slate-950/95 backdrop-blur border-b border-slate-800 no-print">
+        <div className="flex items-center gap-2 px-3 py-2 overflow-x-auto">
+          <button onClick={() => setActiveTab('dashboard')} className="flex items-center gap-2 shrink-0 cursor-pointer">
+            {garageLogo ? (
+              <img src={garageLogo} alt="logo" className="w-7 h-7 rounded-lg object-contain bg-white" />
+            ) : (
+              <div className="w-7 h-7 rounded-lg bg-amber-400 flex items-center justify-center">
+                <Wrench className="w-4 h-4 text-slate-950" />
+              </div>
+            )}
+            <span className="text-sm font-extrabold text-white whitespace-nowrap">{garageName}</span>
           </button>
+          <div className="flex items-center gap-1 ml-auto">
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id as any)}
+                className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-bold whitespace-nowrap cursor-pointer ${
+                  activeTab === tab.id ? 'bg-amber-400 text-slate-950' : 'text-slate-400'
+                }`}
+              >
+                {tab.icon}
+                <span className="hidden sm:inline">{tab.label}</span>
+              </button>
+            ))}
+            <button
+              onClick={() => setLanguage(language === 'fr' ? 'ar' : 'fr')}
+              className="px-2 py-1.5 text-slate-400 text-[11px] font-bold cursor-pointer"
+            >
+              {language === 'fr' ? 'ع' : 'FR'}
+            </button>
+          </div>
         </div>
       </nav>
     </>

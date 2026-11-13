@@ -20,7 +20,7 @@ const AppContent: React.FC = () => {
     <div className="min-h-screen bg-slate-100/60 text-slate-900 flex flex-col font-sans">
       <Navigation />
 
-      <main className="flex-1 lg:pl-60 pb-20 lg:pb-0">
+      <main className="flex-1 lg:pl-60">
         {activeTab === 'dashboard' && <Dashboard />}
         {activeTab === 'workflow' && <WorkflowScanner />}
         {activeTab === 'interventions' && <InterventionsList />}
