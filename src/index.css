@@ -8,10 +8,56 @@
     -webkit-font-smoothing: antialiased;
   }
 
-  /* Ensure tabular numerals on all data numbers, counters, currency, and timestamps */
   .tabular-nums {
     font-variant-numeric: tabular-nums;
   }
+}
+
+/* === Rendu app mobile === */
+html {
+  -webkit-tap-highlight-color: transparent;
+}
+body {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+@media (max-width: 640px) {
+  /* Modales → bottom-sheet */
+  .fixed.inset-0.z-50 {
+    align-items: flex-end !important;
+    padding: 0 !important;
+  }
+  .fixed.inset-0.z-50 > div {
+    width: 100% !important;
+    max-width: 100% !important;
+    max-height: 92dvh !important;
+    border-radius: 1.25rem 1.25rem 0 0 !important;
+    margin-bottom: 0 !important;
+    overflow-y: auto;
+    animation: sheet-up 0.25s ease-out;
+  }
+  .fixed.inset-0.z-50 > div::before {
+    content: '';
+    display: block;
+    width: 36px;
+    height: 4px;
+    border-radius: 999px;
+    background: #cbd5e1;
+    margin: 8px auto 0;
+  }
+  @keyframes sheet-up {
+    from { transform: translateY(40px); opacity: 0.6; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+}
+
+/* Transition douce entre onglets */
+main > * {
+  animation: fade-in 0.2s ease-out;
+}
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 @media print {
@@ -26,7 +72,6 @@
     display: block !important;
   }
 
-  /* N'afficher que la zone imprimable (facture) */
   body * {
     visibility: hidden;
   }
