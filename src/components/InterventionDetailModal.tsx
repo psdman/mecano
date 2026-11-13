@@ -16,7 +16,12 @@ export const InterventionDetailModal: React.FC<InterventionDetailModalProps> = (
   const { getClientById, getVehicleById, updateIntervention, formatDH, isArabic, t, settings } = useGarage();
 
   const [editing, setEditing] = useState(false);
-  const [editForm, setEditForm] = useState({ motif: '', diagnostic: '', kilometrage: 0, statut: 'en_cours' as Intervention['statut'] });
+  const [editForm, setEditForm] = useState({
+    motif: '', diagnostic: '', kilometrage: 0,
+    statut: 'en_cours' as Intervention['statut'],
+    pieces: [] as Intervention['pieces'],
+  });
+  const [newPart, setNewPart] = useState({ designation: '', quantite: 1, prixUnitaireHT: 0 });
 
   if (!intervention) return null;
 
@@ -29,8 +34,27 @@ export const InterventionDetailModal: React.FC<InterventionDetailModalProps> = (
       diagnostic: intervention.diagnostic || '',
       kilometrage: intervention.kilometrage || 0,
       statut: intervention.statut,
+      pieces: intervention.pieces.map((p) => ({ ...p })),
     });
+    setNewPart({ designation: '', quantite: 1, prixUnitaireHT: 0 });
     setEditing(true);
+  };
+  const addPart = () => {
+    if (!newPart.designation.trim()) return;
+    setEditForm({
+      ...editForm,
+      pieces: [...editForm.pieces, {
+        id: `part-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        designation: newPart.designation.trim(),
+        quantite: newPart.quantite,
+        prixUnitaireHT: newPart.prixUnitaireHT,
+        totalHT: Math.round(newPart.quantite * newPart.prixUnitaireHT * 100) / 100,
+      }],
+    });
+    setNewPart({ designation: '', quantite: 1, prixUnitaireHT: 0 });
+  };
+  const removePart = (idx: number) => {
+    setEditForm({ ...editForm, pieces: editForm.pieces.filter((_, i) => i !== idx) });
   };
   const saveEdit = () => {
     updateIntervention(intervention.id, {
@@ -38,6 +62,7 @@ export const InterventionDetailModal: React.FC<InterventionDetailModalProps> = (
       diagnostic: editForm.diagnostic || undefined,
       kilometrage: editForm.kilometrage || undefined,
       statut: editForm.statut,
+      pieces: editForm.pieces,
     });
     setEditing(false);
   };
@@ -62,8 +87,8 @@ export const InterventionDetailModal: React.FC<InterventionDetailModalProps> = (
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4">
-      <div className="bg-white rounded-xl border border-slate-200 shadow-2xl max-w-3xl w-full max-h-[92vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 bg-slate-100 overflow-y-auto">
+      <div className="bg-white min-h-screen max-w-4xl w-full mx-auto border-x border-slate-200 shadow-sm">
         {/* Controls */}
         <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50 no-print">
           <div className="flex items-center gap-2">
@@ -212,6 +237,32 @@ export const InterventionDetailModal: React.FC<InterventionDetailModalProps> = (
                   <option value="facture">{isArabic ? 'تمت الفوترة' : 'Facturé'}</option>
                   <option value="annule">{isArabic ? 'ملغى' : 'Annulé'}</option>
                 </select>
+              </div>
+              {/* Pièces : ajout / suppression */}
+              <div className="sm:col-span-2">
+                <label className="block font-bold text-slate-700 mb-1">{isArabic ? 'قطع الغيار' : 'Pièces détachées'}</label>
+                <div className="space-y-1.5 mb-2">
+                  {editForm.pieces.map((p, i) => (
+                    <div key={i} className="flex items-center gap-2 text-xs bg-slate-50 rounded-md px-2 py-1.5">
+                      <span className="flex-1 font-medium">{p.designation}</span>
+                      <span className="font-mono text-slate-500">x{p.quantite}</span>
+                      <span className="font-mono font-bold">{formatDH(p.totalHT)}</span>
+                      <button onClick={() => removePart(i)} className="text-red-500 hover:text-red-700 cursor-pointer"><X className="w-3.5 h-3.5" /></button>
+                    </div>
+                  ))}
+                </div>
+                <div className="grid grid-cols-[1fr_70px_90px_auto] gap-2">
+                  <input placeholder={isArabic ? 'تسمية القطعة' : 'Désignation'} value={newPart.designation}
+                    onChange={(e) => setNewPart({ ...newPart, designation: e.target.value })}
+                    className="px-2 py-1.5 border border-slate-300 rounded-md text-xs" />
+                  <input type="number" min="1" value={newPart.quantite}
+                    onChange={(e) => setNewPart({ ...newPart, quantite: Number(e.target.value) })}
+                    className="px-2 py-1.5 border border-slate-300 rounded-md text-xs font-mono" />
+                  <input type="number" min="0" placeholder="Prix HT" value={newPart.prixUnitaireHT || ''}
+                    onChange={(e) => setNewPart({ ...newPart, prixUnitaireHT: Number(e.target.value) })}
+                    className="px-2 py-1.5 border border-slate-300 rounded-md text-xs font-mono" />
+                  <button onClick={addPart} className="px-3 py-1.5 bg-slate-900 text-white text-xs font-bold rounded-md cursor-pointer">+</button>
+                </div>
               </div>
             </div>
           ) : (
