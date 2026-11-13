@@ -91,42 +91,39 @@ export const Navigation: React.FC = () => {
         </div>
       </aside>
 
-      {/* ===== Barre mobile (haut d'écran, style app) ===== */}
-      <nav className="lg:hidden sticky top-0 z-40 bg-slate-950/95 backdrop-blur border-b border-slate-800 no-print pt-[env(safe-area-inset-top)]">
-        <div className="flex items-center gap-2 px-3 py-2.5 overflow-x-auto scrollbar-none">
-          <button onClick={() => setActiveTab('dashboard')} className="flex items-center gap-2 shrink-0 cursor-pointer">
+      {/* ===== Barre mobile : cachée sur l'accueil, fine barre retour ailleurs ===== */}
+      {activeTab !== 'home' && (
+      <nav className="lg:hidden sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-slate-200 no-print pt-[env(safe-area-inset-top)]">
+        <div className="flex items-center gap-2 px-3 py-2">
+          <button onClick={() => setActiveTab('home')} className="flex items-center gap-2 shrink-0 cursor-pointer">
             {garageLogo ? (
-              <img src={garageLogo} alt="logo" className="w-8 h-8 rounded-xl object-contain bg-white" />
+              <img src={garageLogo} alt="logo" className="w-7 h-7 rounded-lg object-contain bg-white border border-slate-200" />
             ) : (
-              <div className="w-8 h-8 rounded-xl bg-amber-400 flex items-center justify-center shadow-md shadow-amber-400/20">
-                <Wrench className="w-4.5 h-4.5 text-slate-950" />
+              <div className="w-7 h-7 rounded-lg bg-amber-400 flex items-center justify-center">
+                <Wrench className="w-4 h-4 text-slate-950" />
               </div>
             )}
-            <span className="text-[15px] font-extrabold text-white whitespace-nowrap tracking-tight">{garageName}</span>
           </button>
+          <span className="text-sm font-extrabold text-slate-900 truncate">{tabs.find((t) => t.id === activeTab)?.label || garageName}</span>
           <div className="flex items-center gap-1 ml-auto">
-            {tabs.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id as any)}
-                className={`flex flex-col items-center justify-center gap-0.5 px-3 py-1.5 rounded-xl min-w-[56px] min-h-[44px] cursor-pointer transition-colors ${
-                  activeTab === tab.id ? 'bg-amber-400 text-slate-950' : 'text-slate-400'
-                }`}
-              >
-                {tab.icon}
-                <span className="text-[9px] font-bold leading-none">{tab.label}</span>
-              </button>
-            ))}
             <button
               onClick={() => setLanguage(language === 'fr' ? 'ar' : 'fr')}
-              className="flex flex-col items-center justify-center gap-0.5 px-2.5 py-1.5 min-h-[44px] text-slate-400 cursor-pointer"
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-slate-500 text-[11px] font-bold cursor-pointer"
             >
-              <Languages className="w-4 h-4" />
-              <span className="text-[9px] font-bold">{language === 'fr' ? 'ع' : 'FR'}</span>
+              <Languages className="w-3.5 h-3.5" />
+              {language === 'fr' ? 'ع' : 'FR'}
+            </button>
+            <button
+              onClick={async () => { await api.logout(); window.location.reload(); }}
+              className="p-2 text-slate-400 hover:text-red-500 cursor-pointer"
+              title="Déconnexion"
+            >
+              <LogOut className="w-4 h-4" />
             </button>
           </div>
         </div>
       </nav>
+      )}
     </>
   );
 };

@@ -2,8 +2,9 @@ import React from 'react';
 import { useGarage } from '../context/GarageContext';
 import {
   LayoutDashboard, ScanLine, ClipboardList, Car, Users, Wallet,
-  ShieldCheck, Wrench, Sparkles,
+  ShieldCheck, Wrench, Sparkles, Languages, LogOut,
 } from 'lucide-react';
+import { api } from '../utils/api';
 
 const TABS = [
   { id: 'dashboard', label: 'Tableau de bord', ar: 'لوحة القيادة', icon: LayoutDashboard, color: 'bg-blue-500' },
@@ -16,7 +17,7 @@ const TABS = [
 ] as const;
 
 export const HomeLauncher: React.FC = () => {
-  const { setActiveTab, isArabic, isAdmin, user, settings } = useGarage();
+  const { setActiveTab, isArabic, isAdmin, user, settings, language, setLanguage } = useGarage();
   const name = settings?.garageNom || 'MecaScan';
 
   const can = (perm: string) => isAdmin || user?.permissions?.[perm] !== false;
@@ -25,7 +26,23 @@ export const HomeLauncher: React.FC = () => {
   );
 
   return (
-    <div className="min-h-[70vh] flex flex-col items-center justify-center px-4 py-10">
+    <div className="min-h-[70vh] flex flex-col items-center justify-center px-4 py-10 relative">
+      {/* Langue + déconnexion */}
+      <div className="absolute top-3 end-3 flex items-center gap-2">
+        <button
+          onClick={() => setLanguage(language === 'fr' ? 'ar' : 'fr')}
+          className="flex items-center gap-1 px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-600 shadow-sm cursor-pointer"
+        >
+          <Languages className="w-3.5 h-3.5" /> {language === 'fr' ? 'ع' : 'FR'}
+        </button>
+        <button
+          onClick={async () => { await api.logout(); window.location.reload(); }}
+          className="p-2 bg-white border border-slate-200 rounded-lg text-slate-400 hover:text-red-500 shadow-sm cursor-pointer"
+          title="Déconnexion"
+        >
+          <LogOut className="w-4 h-4" />
+        </button>
+      </div>
       {/* Logo / nom */}
       <div className="mb-10 text-center">
         {settings?.garageLogo ? (
