@@ -140,7 +140,7 @@ export const InterventionDetailModal: React.FC<InterventionDetailModalProps> = (
         </div>
 
         {/* Printable Document */}
-        <div className="print-area p-8 space-y-6 text-slate-900 bg-white">
+        <div className="print-area p-4 sm:p-8 space-y-6 text-slate-900 bg-white">
           <div className="print-pad">
           <div className="flex flex-col sm:flex-row justify-between gap-6 pb-6 border-b border-slate-200">
             <div>
@@ -343,7 +343,7 @@ export const InterventionDetailModal: React.FC<InterventionDetailModalProps> = (
           </div>
 
           {/* Signatures */}
-          <div className="pt-8 border-t border-slate-200 grid grid-cols-2 gap-8 text-xs text-slate-500">
+          <div className="pt-8 border-t border-slate-200 grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8 text-xs text-slate-500">
             <div>
               <span className="block font-bold text-slate-700">{t.mechanicSignature} :</span>
               <div className="h-16 mt-2 border border-dashed border-slate-300 rounded-md flex items-end p-2 text-[10px] text-slate-400">
