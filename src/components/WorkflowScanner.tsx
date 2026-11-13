@@ -35,6 +35,7 @@ export const WorkflowScanner: React.FC = () => {
     clients,
     addClient,
     addVehicle,
+    vehicles,
     addIntervention,
     addPayment,
     setActiveTab,
@@ -327,7 +328,7 @@ export const WorkflowScanner: React.FC = () => {
 
     const newVehicle = addVehicle({
       clientId: finalClientId,
-      immatriculation: formatMoroccanLicensePlate(detectedPlate),
+      immatriculation: formatMoroccanLicensePlate(detectedPlate) || detectedPlate.trim(),
       marque: detectedMarque,
       modele: detectedModele,
       vin: detectedVin,
@@ -389,9 +390,10 @@ export const WorkflowScanner: React.FC = () => {
     const clientName = clients.find((c) => c.id === createdRecords?.clientId)?.nomComplet
       || `${detectedPrenom} ${detectedNom}`.trim() || 'Client';
     const firstName = clientName.split(' ')[0] || 'Client';
+    const plateDisplay = vehicles.find((v) => v.id === createdRecords?.vehicleId)?.immatriculation || detectedPlate;
     const message = isArabic
-      ? `السلام عليكم سي ${firstName}، طوموبيل ديالك (${detectedPlate}) تم تسجيلها في الكراج. مجموع الإصلاح: ${formatDH(totals.totalTTC)}. شكراً لك!`
-      : `Bonjour M. ${firstName}, votre véhicule (${detectedPlate}) est bien pris en charge à notre atelier. Total réparation: ${formatDH(totals.totalTTC)}. Merci pour votre confiance !`;
+      ? `السلام عليكم سي ${firstName}، طوموبيل ديالك (${plateDisplay}) تم تسجيلها في الكراج. مجموع الإصلاح: ${formatDH(totals.totalTTC)}. شكراً لك!`
+      : `Bonjour M. ${firstName}, votre véhicule (${plateDisplay}) est bien pris en charge à notre atelier. Total réparation: ${formatDH(totals.totalTTC)}. Merci pour votre confiance !`;
 
     window.open(`https://wa.me/${phoneFormatted}?text=${encodeURIComponent(message)}`, '_blank');
   };
