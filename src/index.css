@@ -88,8 +88,12 @@ main > * {
     height: auto !important;
   }
   .print-area {
-    position: static !important;
-    inset: auto !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: auto !important;
+    height: auto !important;
     width: 100% !important;
     max-height: none !important;
     overflow: visible !important;
