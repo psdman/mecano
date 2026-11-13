@@ -6,7 +6,7 @@ import {
   INITIAL_INTERVENTIONS,
   INITIAL_PAYMENTS,
 } from '../data/seedData';
-import { calculateClientBalance, formatPrice } from '../utils/garageCalculations';
+import { calculateClientBalance, calculateInterventionTotals, formatPrice } from '../utils/garageCalculations';
 import { TRANSLATIONS, Language } from '../utils/translations';
 import { api, SessionUser } from '../utils/api';
 
@@ -252,8 +252,29 @@ export const GarageProvider: React.FC<{ children: React.ReactNode; user?: Sessio
   };
 
   const updateIntervention = (id: string, updates: Partial<Intervention>) => {
-    const merged = { ...interventions.find((i) => i.id === id), ...updates } as Intervention;
-    setInterventions((prev) => prev.map((i) => (i.id === id ? { ...i, ...updates } : i)));
+    const existing = interventions.find((i) => i.id === id);
+    if (!existing) return;
+    const merged = { ...existing, ...updates } as Intervention;
+
+    // Recalcule les totaux dès que pièces, MO, remise ou TVA changent
+    const touchesTotals =
+      updates.pieces !== undefined ||
+      updates.mainDOeuvreHeures !== undefined ||
+      updates.tauxHoraireHT !== undefined ||
+      updates.remiseHT !== undefined ||
+      updates.tauxTva !== undefined;
+    if (touchesTotals) {
+      const totals = calculateInterventionTotals(
+        merged.pieces || [],
+        merged.mainDOeuvreHeures || 0,
+        merged.tauxHoraireHT || 0,
+        merged.remiseHT || 0,
+        merged.tauxTva || 0
+      );
+      Object.assign(merged, totals);
+    }
+
+    setInterventions((prev) => prev.map((i) => (i.id === id ? merged : i)));
     api.upsertRecord('interventions', merged).catch(() => {});
   };
 
