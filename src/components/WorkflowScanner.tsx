@@ -703,6 +703,16 @@ export const WorkflowScanner: React.FC = () => {
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-400 focus:outline-hidden"
                 />
               </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">{isArabic ? 'تاريخ أول تسجيل' : 'Date de mise en circulation'}</label>
+                <input
+                  type="text"
+                  placeholder="JJ/MM/AAAA"
+                  value={detectedDateMec}
+                  onChange={(e) => setDetectedDateMec(e.target.value)}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs font-mono focus:ring-2 focus:ring-amber-400 focus:outline-hidden"
+                />
+              </div>
             </div>
           </div>
 

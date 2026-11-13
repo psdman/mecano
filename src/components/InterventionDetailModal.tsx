@@ -139,6 +139,11 @@ export const InterventionDetailModal: React.FC<InterventionDetailModalProps> = (
               <span className="text-slate-500 text-[10px] block font-sans">
                 {vehicle ? `${vehicle.marque} ${vehicle.modele}` : ''}
               </span>
+              {vehicle?.vin && (
+                <span className="text-slate-500 text-[10px] block font-sans">
+                  {isArabic ? 'رقم الهيكل' : 'VIN'} : {vehicle.vin}
+                </span>
+              )}
             </div>
             <div>
               <span className="text-slate-400 block text-[10px] font-sans">{isArabic ? 'العداد' : 'KILOMÉTRAGE'}</span>

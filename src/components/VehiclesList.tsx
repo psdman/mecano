@@ -110,9 +110,9 @@ export const VehiclesList: React.FC = () => {
               >
                 <div>
                   <div className="h-40 bg-slate-900 relative overflow-hidden flex items-center justify-center">
-                    {vehicle.photoVehiculeUrl ? (
+                    {(vehicle.photoVehiculeUrl || vehicle.photoCarteGriseUrl) ? (
                       <img
-                        src={vehicle.photoVehiculeUrl}
+                        src={vehicle.photoVehiculeUrl || vehicle.photoCarteGriseUrl}
                         alt={`${vehicle.marque} ${vehicle.modele}`}
                         className="w-full h-full object-cover"
                       />
