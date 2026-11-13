@@ -9,6 +9,7 @@ import {
   Calendar,
   Gauge,
   Pencil,
+  Trash2,
   X,
 } from 'lucide-react';
 import { Vehicle } from '../types/garage';
@@ -20,6 +21,7 @@ export const VehiclesList: React.FC = () => {
     getClientById,
     setActiveTab,
     updateVehicle,
+    deleteVehicle,
     formatDH,
     isArabic,
     t,
@@ -185,6 +187,13 @@ export const VehiclesList: React.FC = () => {
                     title={isArabic ? 'تعديل' : 'Modifier'}
                   >
                     <Pencil className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => { if (confirm(isArabic ? 'حذف السيارة وكل إصلاحاتها؟' : 'Supprimer ce véhicule et ses interventions ?')) deleteVehicle(vehicle.id); }}
+                    className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded cursor-pointer"
+                    title={isArabic ? 'حذف' : 'Supprimer'}
+                  >
+                    <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
               </div>

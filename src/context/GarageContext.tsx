@@ -28,8 +28,10 @@ interface GarageContextType {
   setActiveTab: (tab: 'home' | 'dashboard' | 'workflow' | 'interventions' | 'vehicles' | 'clients' | 'caisse' | 'admin') => void;
   addClient: (client: Omit<Client, 'id' | 'createdAt'>) => Client;
   updateClient: (id: string, updates: Partial<Client>) => void;
+  deleteClient: (id: string) => void;
   addVehicle: (vehicle: Omit<Vehicle, 'id' | 'createdAt'>) => Vehicle;
   updateVehicle: (id: string, updates: Partial<Vehicle>) => void;
+  deleteVehicle: (id: string) => void;
   addIntervention: (intervention: Omit<Intervention, 'id' | 'createdAt'>) => Intervention;
   updateIntervention: (id: string, updates: Partial<Intervention>) => void;
   deleteIntervention: (id: string) => void;
@@ -184,6 +186,13 @@ export const GarageProvider: React.FC<{ children: React.ReactNode; user?: Sessio
     setClients((prev) => prev.map((c) => (c.id === id ? { ...c, ...updates } : c)));
   };
 
+  const deleteClient = (id: string) => {
+    setClients((prev) => prev.filter((c) => c.id !== id));
+    setVehicles((prev) => prev.filter((v) => v.clientId !== id));
+    setInterventions((prev) => prev.filter((i) => i.clientId !== id));
+    setPayments((prev) => prev.filter((p) => p.clientId !== id));
+  };
+
   const addVehicle = (vehicleData: Omit<Vehicle, 'id' | 'createdAt'>): Vehicle => {
     const newVehicle: Vehicle = {
       ...vehicleData,
@@ -196,6 +205,11 @@ export const GarageProvider: React.FC<{ children: React.ReactNode; user?: Sessio
 
   const updateVehicle = (id: string, updates: Partial<Vehicle>) => {
     setVehicles((prev) => prev.map((v) => (v.id === id ? { ...v, ...updates } : v)));
+  };
+
+  const deleteVehicle = (id: string) => {
+    setVehicles((prev) => prev.filter((v) => v.id !== id));
+    setInterventions((prev) => prev.filter((i) => i.vehiculeId !== id));
   };
 
   const addIntervention = (data: Omit<Intervention, 'id' | 'createdAt'>): Intervention => {
@@ -278,8 +292,10 @@ export const GarageProvider: React.FC<{ children: React.ReactNode; user?: Sessio
         setActiveTab,
         addClient,
         updateClient,
+        deleteClient,
         addVehicle,
         updateVehicle,
+        deleteVehicle,
         addIntervention,
         updateIntervention,
         deleteIntervention,

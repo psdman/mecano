@@ -15,6 +15,7 @@ import {
   X,
   MessageCircle,
   Pencil,
+  Trash2,
 } from 'lucide-react';
 
 export const ClientsBalances: React.FC = () => {
@@ -25,6 +26,7 @@ export const ClientsBalances: React.FC = () => {
     payments,
     getClientBalance,
     updateClient,
+    deleteClient,
     setIsPaymentModalOpen,
     setPreselectedClientIdForPayment,
     t,
@@ -311,6 +313,13 @@ export const ClientsBalances: React.FC = () => {
                           >
                             <CreditCard className="w-3.5 h-3.5" />
                             <span>{t.collectBtn}</span>
+                          </button>
+                          <button
+                            onClick={() => { if (confirm(isArabic ? 'حذف الزبون وكل بياناته (سيارات، إصلاحات، مدفوعات)؟' : 'Supprimer ce client et toutes ses données (véhicules, interventions, paiements) ?')) deleteClient(client.id); }}
+                            className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg cursor-pointer"
+                            title={isArabic ? 'حذف' : 'Supprimer'}
+                          >
+                            <Trash2 className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => openEditClient(client)}
