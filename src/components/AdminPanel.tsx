@@ -170,7 +170,7 @@ export const AdminPanel: React.FC = () => {
             {[
               ['mainDOeuvreMontant', 'Main d\'œuvre par défaut (DH)'],
               ['remiseHT', 'Remise par défaut (DH)'],
-              ['tauxTva', 'TVA par défaut (%)'],
+              // TVA désactivée
               ['depositAmount', 'Acompte par défaut (DH)'],
               ['acomptePourcentage', 'Acompte % du total'],
             ].map(([k, label]) => (

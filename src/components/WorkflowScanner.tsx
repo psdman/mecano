@@ -51,7 +51,7 @@ export const WorkflowScanner: React.FC = () => {
     const n = (k: string) => settings[k] !== undefined ? Number(settings[k]) : NaN;
     if (!isNaN(n('mainDOeuvreMontant'))) setMainDOeuvreMontant(n('mainDOeuvreMontant'));
     if (!isNaN(n('remiseHT'))) setRemiseHT(n('remiseHT'));
-    if (!isNaN(n('tauxTva'))) setTauxTva(n('tauxTva'));
+    // TVA désactivée : taux forcé à 0
     if (!isNaN(n('depositAmount'))) setDepositAmount(n('depositAmount'));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [settings]);
@@ -95,7 +95,7 @@ export const WorkflowScanner: React.FC = () => {
   const [parts, setParts] = useState<ReplacedPart[]>([]);
   const [mainDOeuvreMontant, setMainDOeuvreMontant] = useState<number>(120);
   const [remiseHT, setRemiseHT] = useState<number>(30);
-  const [tauxTva, setTauxTva] = useState<number>(20);
+  const [tauxTva] = useState<number>(0); // TVA désactivée
 
   // Immediate deposit in DH
   const [withDeposit, setWithDeposit] = useState(false);
@@ -1000,19 +1000,6 @@ export const WorkflowScanner: React.FC = () => {
                   min="0"
                   value={remiseHT}
                   onChange={(e) => setRemiseHT(Number(e.target.value))}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs font-mono"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">{t.vatRate}</label>
-                <input
-                  type="number"
-                  min="0"
-                  max="100"
-                  step="0.5"
-                  value={tauxTva}
-                  onChange={(e) => setTauxTva(Number(e.target.value))}
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs font-mono"
                 />
               </div>
