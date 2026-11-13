@@ -90,37 +90,38 @@ export const Navigation: React.FC = () => {
         </div>
       </aside>
 
-      {/* ===== Barre mobile (haut d'écran) ===== */}
-      <nav className="lg:hidden sticky top-0 z-40 bg-slate-950/95 backdrop-blur border-b border-slate-800 no-print">
-        <div className="flex items-center gap-2 px-3 py-2 overflow-x-auto">
+      {/* ===== Barre mobile (haut d'écran, style app) ===== */}
+      <nav className="lg:hidden sticky top-0 z-40 bg-slate-950/95 backdrop-blur border-b border-slate-800 no-print pt-[env(safe-area-inset-top)]">
+        <div className="flex items-center gap-2 px-3 py-2.5 overflow-x-auto scrollbar-none">
           <button onClick={() => setActiveTab('dashboard')} className="flex items-center gap-2 shrink-0 cursor-pointer">
             {garageLogo ? (
-              <img src={garageLogo} alt="logo" className="w-7 h-7 rounded-lg object-contain bg-white" />
+              <img src={garageLogo} alt="logo" className="w-8 h-8 rounded-xl object-contain bg-white" />
             ) : (
-              <div className="w-7 h-7 rounded-lg bg-amber-400 flex items-center justify-center">
-                <Wrench className="w-4 h-4 text-slate-950" />
+              <div className="w-8 h-8 rounded-xl bg-amber-400 flex items-center justify-center shadow-md shadow-amber-400/20">
+                <Wrench className="w-4.5 h-4.5 text-slate-950" />
               </div>
             )}
-            <span className="text-sm font-extrabold text-white whitespace-nowrap">{garageName}</span>
+            <span className="text-[15px] font-extrabold text-white whitespace-nowrap tracking-tight">{garageName}</span>
           </button>
           <div className="flex items-center gap-1 ml-auto">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as any)}
-                className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-bold whitespace-nowrap cursor-pointer ${
+                className={`flex flex-col items-center justify-center gap-0.5 px-3 py-1.5 rounded-xl min-w-[56px] min-h-[44px] cursor-pointer transition-colors ${
                   activeTab === tab.id ? 'bg-amber-400 text-slate-950' : 'text-slate-400'
                 }`}
               >
                 {tab.icon}
-                <span className="hidden sm:inline">{tab.label}</span>
+                <span className="text-[9px] font-bold leading-none">{tab.label}</span>
               </button>
             ))}
             <button
               onClick={() => setLanguage(language === 'fr' ? 'ar' : 'fr')}
-              className="px-2 py-1.5 text-slate-400 text-[11px] font-bold cursor-pointer"
+              className="flex flex-col items-center justify-center gap-0.5 px-2.5 py-1.5 min-h-[44px] text-slate-400 cursor-pointer"
             >
-              {language === 'fr' ? 'ع' : 'FR'}
+              <Languages className="w-4 h-4" />
+              <span className="text-[9px] font-bold">{language === 'fr' ? 'ع' : 'FR'}</span>
             </button>
           </div>
         </div>
