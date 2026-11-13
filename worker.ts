@@ -338,6 +338,7 @@ async function handleUsers(request: Request, env: Env, url: URL): Promise<Respon
   const delMatch = url.pathname.match(/^\/api\/users\/([^/]+)$/);
   if (delMatch && request.method === 'DELETE') {
     if (delMatch[1] === me.id) return jsonResponse({ success: false, error: 'Vous ne pouvez pas supprimer votre propre compte.' }, 400);
+    await env.DB.prepare('DELETE FROM sessions WHERE user_id = ?').bind(delMatch[1]).run();
     await env.DB.prepare('DELETE FROM users WHERE id = ?').bind(delMatch[1]).run();
     return jsonResponse({ success: true });
   }
