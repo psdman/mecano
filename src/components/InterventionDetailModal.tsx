@@ -251,7 +251,7 @@ export const InterventionDetailModal: React.FC<InterventionDetailModalProps> = (
                     </div>
                   ))}
                 </div>
-                <div className="grid grid-cols-[1fr_70px_90px_auto] gap-2">
+                <div className="grid grid-cols-2 sm:grid-cols-[1fr_70px_90px_auto] gap-2">
                   <input placeholder={isArabic ? 'تسمية القطعة' : 'Désignation'} value={newPart.designation}
                     onChange={(e) => setNewPart({ ...newPart, designation: e.target.value })}
                     className="px-2 py-1.5 border border-slate-300 rounded-md text-xs" />
@@ -281,8 +281,8 @@ export const InterventionDetailModal: React.FC<InterventionDetailModalProps> = (
           )}
 
           {/* Parts Table */}
-          <div className="border border-slate-200 rounded-lg overflow-hidden">
-            <table className="w-full text-left text-xs">
+          <div className="border border-slate-200 rounded-lg overflow-x-auto">
+            <table className="w-full text-left text-xs min-w-[480px]">
               <thead className="bg-slate-100 text-slate-700 font-bold border-b border-slate-200">
                 <tr>
                   <th className="py-2.5 px-3">{t.partDesignation}</th>
