@@ -9,6 +9,7 @@ import { ClientsBalances } from './components/ClientsBalances';
 import { CaissePaiements } from './components/CaissePaiements';
 import { PaymentModal } from './components/PaymentModal';
 import { AdminPanel } from './components/AdminPanel';
+import { HomeLauncher } from './components/HomeLauncher';
 import { Login } from './components/Login';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { api, SessionUser } from './utils/api';
@@ -21,6 +22,7 @@ const AppContent: React.FC = () => {
       <Navigation />
 
       <main className="flex-1 lg:pl-60 px-0 sm:px-0">
+        {activeTab === 'home' && <HomeLauncher />}
         {activeTab === 'dashboard' && <Dashboard />}
         {activeTab === 'workflow' && <WorkflowScanner />}
         {activeTab === 'interventions' && <InterventionsList />}

@@ -24,8 +24,8 @@ interface GarageContextType {
   vehicles: Vehicle[];
   interventions: Intervention[];
   payments: Payment[];
-  activeTab: 'dashboard' | 'workflow' | 'interventions' | 'vehicles' | 'clients' | 'caisse' | 'admin';
-  setActiveTab: (tab: 'dashboard' | 'workflow' | 'interventions' | 'vehicles' | 'clients' | 'caisse' | 'admin') => void;
+  activeTab: 'home' | 'dashboard' | 'workflow' | 'interventions' | 'vehicles' | 'clients' | 'caisse' | 'admin';
+  setActiveTab: (tab: 'home' | 'dashboard' | 'workflow' | 'interventions' | 'vehicles' | 'clients' | 'caisse' | 'admin') => void;
   addClient: (client: Omit<Client, 'id' | 'createdAt'>) => Client;
   updateClient: (id: string, updates: Partial<Client>) => void;
   addVehicle: (vehicle: Omit<Vehicle, 'id' | 'createdAt'>) => Vehicle;
@@ -80,7 +80,7 @@ export const GarageProvider: React.FC<{ children: React.ReactNode; user?: Sessio
     document.documentElement.dir = dir;
   }, [language, dir]);
 
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'workflow' | 'interventions' | 'vehicles' | 'clients' | 'caisse' | 'admin'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'home' | 'dashboard' | 'workflow' | 'interventions' | 'vehicles' | 'clients' | 'caisse' | 'admin'>('home');
   const [settings, setSettings] = useState<Record<string, string>>({});
 
   const saveSettings = async (s: Record<string, string>) => {

@@ -1,6 +1,6 @@
 import React from 'react';
 import { useGarage } from '../context/GarageContext';
-import { Wrench, Plus, Languages, ShieldCheck, LogOut, LayoutDashboard, ClipboardList, Car, Users, Wallet, ScanLine } from 'lucide-react';
+import { Wrench, Plus, Languages, ShieldCheck, LogOut, LayoutDashboard, ClipboardList, Car, Users, Wallet, ScanLine, Home } from 'lucide-react';
 import { api } from '../utils/api';
 
 interface TabDef { id: string; label: string; icon: React.ReactNode }
@@ -13,6 +13,7 @@ export const Navigation: React.FC = () => {
   const can = (perm: string) => isAdmin || user?.permissions?.[perm] !== false;
 
   const tabs: TabDef[] = [
+    { id: 'home', label: isArabic ? 'الرئيسية' : 'Accueil', icon: <Home className="w-4 h-4" /> },
     { id: 'dashboard', label: t.dashboard, icon: <LayoutDashboard className="w-4 h-4" /> },
     ...(can('workflow') ? [{ id: 'workflow', label: t.workflow, icon: <ScanLine className="w-4 h-4" /> }] : []),
     ...(can('interventions') ? [{ id: 'interventions', label: t.interventions, icon: <ClipboardList className="w-4 h-4" /> }] : []),
