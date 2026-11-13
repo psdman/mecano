@@ -92,7 +92,7 @@ export const TRANSLATIONS = {
     depositAmount: 'Montant avance (DH)',
     financialSummary: 'Décompte Atelier',
     totalParts: 'Total Pièces Détachées',
-    totalLabor: 'Total Main d’œuvre (M3ellem)',
+    totalLabor: 'Main d’œuvre',
     netTotal: 'Total Net à Payer (DH)',
     submitIntervention: 'Valider & Enregistrer l’Intervention',
 
@@ -238,7 +238,7 @@ export const TRANSLATIONS = {
     depositAmount: 'مبلغ التسبيق (درهم)',
     financialSummary: 'الحساب الإجمالي للإصلاح',
     totalParts: 'مجموع قطع الغيار',
-    totalLabor: 'أجرة يد المعلم (خدمة الكراج)',
+    totalLabor: 'أجرة يد المعلم',
     netTotal: 'المجموع الإجمالي الصافي (درهم)',
     submitIntervention: 'تأكيد وحفظ فاتورة الإصلاح',
 

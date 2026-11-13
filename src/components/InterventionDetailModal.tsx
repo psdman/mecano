@@ -90,7 +90,7 @@ export const InterventionDetailModal: React.FC<InterventionDetailModalProps> = (
     <div className="fixed inset-0 z-50 bg-slate-100 overflow-y-auto">
       <div className="bg-white min-h-screen max-w-4xl w-full mx-auto border-x border-slate-200 shadow-sm">
         {/* Controls */}
-        <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50 no-print">
+        <div className="p-3 sm:p-4 border-b border-slate-100 flex flex-wrap items-center justify-between gap-2 bg-slate-50 no-print">
           <div className="flex items-center gap-2">
             <span className="text-xs font-bold uppercase text-slate-500">
               {isArabic ? 'ورقة الإصلاح / الفاتورة' : 'Ordre de Réparation / Facture'}
