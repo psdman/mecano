@@ -161,19 +161,28 @@ export const GarageProvider: React.FC<{ children: React.ReactNode; user?: Sessio
 
   // Sync localStorage + base D1
   useEffect(() => {
-    localStorage.setItem(`${STORAGE_KEY}_clients`, JSON.stringify(clients));
+    try { localStorage.setItem(`${STORAGE_KEY}_clients`, JSON.stringify(clients)); } catch {}
   }, [clients]);
 
   useEffect(() => {
-    localStorage.setItem(`${STORAGE_KEY}_vehicles`, JSON.stringify(vehicles));
+    // Les photos base64 dépassent le quota localStorage : on les exclut
+    // du cache (elles restent en mémoire et dans D1).
+    const light = vehicles.map((v) => {
+      const copy: Partial<Vehicle> = { ...v };
+      delete copy.photoVehiculeUrl;
+      delete copy.photoCarteGriseUrl;
+      delete copy.photoCarteGriseVersoUrl;
+      return copy as Vehicle;
+    });
+    try { localStorage.setItem(`${STORAGE_KEY}_vehicles`, JSON.stringify(light)); } catch {}
   }, [vehicles]);
 
   useEffect(() => {
-    localStorage.setItem(`${STORAGE_KEY}_interventions`, JSON.stringify(interventions));
+    try { localStorage.setItem(`${STORAGE_KEY}_interventions`, JSON.stringify(interventions)); } catch {}
   }, [interventions]);
 
   useEffect(() => {
-    localStorage.setItem(`${STORAGE_KEY}_payments`, JSON.stringify(payments));
+    try { localStorage.setItem(`${STORAGE_KEY}_payments`, JSON.stringify(payments)); } catch {}
   }, [payments]);
 
   const addClient = (clientData: Omit<Client, 'id' | 'createdAt'>): Client => {
