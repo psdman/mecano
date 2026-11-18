@@ -19,6 +19,7 @@ export const InterventionDetailModal: React.FC<InterventionDetailModalProps> = (
   const [editForm, setEditForm] = useState({
     motif: '', diagnostic: '', kilometrage: 0,
     statut: 'en_cours' as Intervention['statut'],
+    mainDOeuvreMontant: 0, remiseHT: 0,
     pieces: [] as Intervention['pieces'],
   });
   const [newPart, setNewPart] = useState({ designation: '', quantite: 1, prixUnitaireHT: 0 });
@@ -33,8 +34,7 @@ export const InterventionDetailModal: React.FC<InterventionDetailModalProps> = (
       motif: intervention.motif,
       diagnostic: intervention.diagnostic || '',
       kilometrage: intervention.kilometrage || 0,
-      statut: intervention.statut,
-      pieces: intervention.pieces.map((p) => ({ ...p })),
+      statut: intervention.statut,      mainDOeuvreMontant: intervention.totalMainDOeuvreHT || 0,      remiseHT: intervention.remiseHT || 0,      pieces: intervention.pieces.map((p) => ({ ...p })),
     });
     setNewPart({ designation: '', quantite: 1, prixUnitaireHT: 0 });
     setEditing(true);
@@ -61,8 +61,7 @@ export const InterventionDetailModal: React.FC<InterventionDetailModalProps> = (
       motif: editForm.motif,
       diagnostic: editForm.diagnostic || undefined,
       kilometrage: editForm.kilometrage || undefined,
-      statut: editForm.statut,
-      pieces: editForm.pieces,
+      statut: editForm.statut,      mainDOeuvreHeures: editForm.mainDOeuvreMontant,      tauxHoraireHT: 1,      remiseHT: editForm.remiseHT,      pieces: editForm.pieces,
     });
     setEditing(false);
   };
@@ -242,6 +241,16 @@ export const InterventionDetailModal: React.FC<InterventionDetailModalProps> = (
                   <option value="facture">{isArabic ? 'تمت الفوترة' : 'Facturé'}</option>
                   <option value="annule">{isArabic ? 'ملغى' : 'Annulé'}</option>
                 </select>
+              </div>
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">{isArabic ? 'أجرة اليد' : 'Main d\'œuvre (DH)'}</label>
+                <input type="number" min="0" value={editForm.mainDOeuvreMontant} onChange={(e) => setEditForm({ ...editForm, mainDOeuvreMontant: Number(e.target.value) })}
+                  className="w-full px-2.5 py-1.5 border border-slate-300 rounded-md font-mono" />
+              </div>
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">{isArabic ? 'تخفيض' : 'Remise (DH)'}</label>
+                <input type="number" min="0" value={editForm.remiseHT} onChange={(e) => setEditForm({ ...editForm, remiseHT: Number(e.target.value) })}
+                  className="w-full px-2.5 py-1.5 border border-slate-300 rounded-md font-mono" />
               </div>
               {/* Pièces : ajout / suppression */}
               <div className="sm:col-span-2">
